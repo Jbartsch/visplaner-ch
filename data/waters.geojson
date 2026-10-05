@@ -1,0 +1,628 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "zh-zuerichsee",
+        "name": {
+          "de": "Zürichsee (ZH-Ufer)",
+          "en": "Lake Zurich (ZH shore)"
+        },
+        "canton": "ZH",
+        "waterKind": "lake",
+        "permitType": "patent",
+        "permitSummary": {
+          "de": "Kantonalpatent Zürich für öffentliche Patentgewässer. Tages-/Jahreskarte über das kantonale Patentwesen.",
+          "en": "Cantonal Zurich patent for public patent waters. Day/year tickets via the cantonal patent shop."
+        },
+        "buyUrl": "https://www.zh.ch/de/umwelt-tiere/tiere/jagd-fischerei.html",
+        "buyLabel": {
+          "de": "Zum ZH Fischerei-Portal",
+          "en": "ZH fisheries portal"
+        },
+        "notes": {
+          "de": "MOCK: Regeln unterscheiden sich nach Uferabschnitt und Schonzeiten. Keine Rechtsauskunft.",
+          "en": "MOCK: Rules vary by shoreline section and closed seasons. Not legal advice."
+        },
+        "speciesHint": {
+          "de": "Felchen, Hecht, Egli, Forelle",
+          "en": "Whitefish, pike, perch, trout"
+        },
+        "mock": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              8.52,
+              47.36
+            ],
+            [
+              8.62,
+              47.35
+            ],
+            [
+              8.78,
+              47.28
+            ],
+            [
+              8.82,
+              47.22
+            ],
+            [
+              8.72,
+              47.2
+            ],
+            [
+              8.55,
+              47.25
+            ],
+            [
+              8.5,
+              47.32
+            ],
+            [
+              8.52,
+              47.36
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "zh-greifensee",
+        "name": {
+          "de": "Greifensee",
+          "en": "Lake Greifen"
+        },
+        "canton": "ZH",
+        "waterKind": "lake",
+        "permitType": "patent",
+        "permitSummary": {
+          "de": "Öffentliches Patentgewässer ZH. Kantonalpatent erforderlich.",
+          "en": "Public ZH patent water. Cantonal patent required."
+        },
+        "buyUrl": "https://www.zh.ch/de/umwelt-tiere/tiere/jagd-fischerei.html",
+        "buyLabel": {
+          "de": "Patent infos ZH",
+          "en": "ZH patent info"
+        },
+        "notes": {
+          "de": "MOCK: Naturschutzgebiete am Ufer beachten.",
+          "en": "MOCK: Mind shoreline nature reserves."
+        },
+        "speciesHint": {
+          "de": "Hecht, Egli, Karpfen",
+          "en": "Pike, perch, carp"
+        },
+        "mock": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              8.665,
+              47.365
+            ],
+            [
+              8.695,
+              47.355
+            ],
+            [
+              8.705,
+              47.34
+            ],
+            [
+              8.69,
+              47.33
+            ],
+            [
+              8.665,
+              47.335
+            ],
+            [
+              8.655,
+              47.35
+            ],
+            [
+              8.665,
+              47.365
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "zh-pfaeffikersee",
+        "name": {
+          "de": "Pfäffikersee",
+          "en": "Lake Pfäffikon ZH"
+        },
+        "canton": "ZH",
+        "waterKind": "lake",
+        "permitType": "mixed",
+        "permitSummary": {
+          "de": "Gemischt: Patentgewässer + Pachtabschnitte / lokale Regelungen. Vor Ort klären.",
+          "en": "Mixed: patent waters plus leased stretches / local rules. Confirm on site."
+        },
+        "buyUrl": "https://www.zh.ch/de/umwelt-tiere/tiere/jagd-fischerei.html",
+        "buyLabel": {
+          "de": "ZH Portal + lokal nachfragen",
+          "en": "ZH portal + ask locally"
+        },
+        "notes": {
+          "de": "MOCK: Status gemischt zur Illustration.",
+          "en": "MOCK: Mixed status for illustration."
+        },
+        "speciesHint": {
+          "de": "Hecht, Egli",
+          "en": "Pike, perch"
+        },
+        "mock": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              8.775,
+              47.36
+            ],
+            [
+              8.8,
+              47.355
+            ],
+            [
+              8.805,
+              47.34
+            ],
+            [
+              8.785,
+              47.335
+            ],
+            [
+              8.77,
+              47.345
+            ],
+            [
+              8.775,
+              47.36
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "zh-limmat-city",
+        "name": {
+          "de": "Limmat (Stadt Zürich)",
+          "en": "Limmat (City of Zurich)"
+        },
+        "canton": "ZH",
+        "waterKind": "river",
+        "permitType": "patent",
+        "permitSummary": {
+          "de": "Fliessgewässer mit Kantonalpatent ZH; lokale Verbote an Brücken/Wehren möglich.",
+          "en": "River under ZH cantonal patent; local bans near bridges/weirs possible."
+        },
+        "buyUrl": "https://www.zh.ch/de/umwelt-tiere/tiere/jagd-fischerei.html",
+        "buyLabel": {
+          "de": "ZH Patent beziehen",
+          "en": "Get ZH patent"
+        },
+        "notes": {
+          "de": "MOCK: Stadtnahe Abschnitte oft eingeschränkt.",
+          "en": "MOCK: Urban reaches often restricted."
+        },
+        "speciesHint": {
+          "de": "Äsche, Forelle, Barbe",
+          "en": "Grayling, trout, barbel"
+        },
+        "mock": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            8.542,
+            47.367
+          ],
+          [
+            8.53,
+            47.38
+          ],
+          [
+            8.52,
+            47.39
+          ],
+          [
+            8.51,
+            47.4
+          ],
+          [
+            8.5,
+            47.41
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "zh-rhein-border",
+        "name": {
+          "de": "Rhein (ZH-Grenzbereich)",
+          "en": "Rhine (ZH border area)"
+        },
+        "canton": "ZH",
+        "waterKind": "river",
+        "permitType": "unknown",
+        "permitSummary": {
+          "de": "Unklar / MOCK: Grenzgewässer — Kanton + ggf. Nachbarkanton prüfen.",
+          "en": "Unknown / MOCK: border water — check canton and possibly neighbouring canton."
+        },
+        "buyUrl": "https://www.zh.ch/de/umwelt-tiere/tiere/jagd-fischerei.html",
+        "buyLabel": {
+          "de": "ZH nachfragen",
+          "en": "Enquire with ZH"
+        },
+        "notes": {
+          "de": "MOCK: Absichtlich 'unknown' um Lücken zu zeigen.",
+          "en": "MOCK: Intentionally 'unknown' to show gaps."
+        },
+        "mock": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            8.6,
+            47.68
+          ],
+          [
+            8.55,
+            47.67
+          ],
+          [
+            8.48,
+            47.66
+          ],
+          [
+            8.43,
+            47.65
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "be-thunersee",
+        "name": {
+          "de": "Thunersee",
+          "en": "Lake Thun"
+        },
+        "canton": "BE",
+        "waterKind": "lake",
+        "permitType": "patent",
+        "permitSummary": {
+          "de": "Bernisches Patentgewässer (Fischereiinspektorat BE). Patent- oder Tageskarte nötig.",
+          "en": "Bern patent water (BE fisheries inspectorate). Patent or day ticket required."
+        },
+        "buyUrl": "https://www.be.ch/de/start/themen/umwelt/fischerei.html",
+        "buyLabel": {
+          "de": "BE Fischerei-Infos / Patent",
+          "en": "BE fisheries / patent"
+        },
+        "notes": {
+          "de": "MOCK: BE publiziert Angelfischerei-Geodaten (Patent-/Pachtgewässer).",
+          "en": "MOCK: BE publishes angling GIS (patent/lease waters)."
+        },
+        "speciesHint": {
+          "de": "Felchen, Seeforelle, Hecht",
+          "en": "Whitefish, lake trout, pike"
+        },
+        "mock": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              7.68,
+              46.78
+            ],
+            [
+              7.78,
+              46.76
+            ],
+            [
+              7.85,
+              46.72
+            ],
+            [
+              7.82,
+              46.68
+            ],
+            [
+              7.7,
+              46.7
+            ],
+            [
+              7.63,
+              46.74
+            ],
+            [
+              7.68,
+              46.78
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "be-brienzersee",
+        "name": {
+          "de": "Brienzersee",
+          "en": "Lake Brienz"
+        },
+        "canton": "BE",
+        "waterKind": "lake",
+        "permitType": "patent",
+        "permitSummary": {
+          "de": "Patentgewässer BE. Kantonalpatent / Tagespatent über BE-Kanäle.",
+          "en": "BE patent water. Cantonal/day patent via BE channels."
+        },
+        "buyUrl": "https://www.be.ch/de/start/themen/umwelt/fischerei.html",
+        "buyLabel": {
+          "de": "BE Patent beziehen",
+          "en": "Get BE patent"
+        },
+        "notes": {
+          "de": "MOCK: Bergsee — Schonzeiten beachten.",
+          "en": "MOCK: Alpine lake — observe closed seasons."
+        },
+        "speciesHint": {
+          "de": "Seeforelle, Felchen",
+          "en": "Lake trout, whitefish"
+        },
+        "mock": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              7.92,
+              46.74
+            ],
+            [
+              8.02,
+              46.73
+            ],
+            [
+              8.08,
+              46.7
+            ],
+            [
+              8.05,
+              46.68
+            ],
+            [
+              7.95,
+              46.69
+            ],
+            [
+              7.9,
+              46.72
+            ],
+            [
+              7.92,
+              46.74
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "be-bielersee",
+        "name": {
+          "de": "Bielersee",
+          "en": "Lake Biel"
+        },
+        "canton": "BE",
+        "waterKind": "lake",
+        "permitType": "patent",
+        "permitSummary": {
+          "de": "Patentgewässer BE (Seeteil). Tages-/Jahrespatent.",
+          "en": "BE patent water (lake section). Day/year patent."
+        },
+        "buyUrl": "https://www.be.ch/de/start/themen/umwelt/fischerei.html",
+        "buyLabel": {
+          "de": "Zum BE Fischerei-Portal",
+          "en": "BE fisheries portal"
+        },
+        "notes": {
+          "de": "MOCK: Drei-Seen-Land — Nachbarkantone separat.",
+          "en": "MOCK: Three-Lakes region — other cantons separate."
+        },
+        "speciesHint": {
+          "de": "Egli, Hecht, Zander",
+          "en": "Perch, pike, zander"
+        },
+        "mock": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              7.1,
+              47.08
+            ],
+            [
+              7.2,
+              47.1
+            ],
+            [
+              7.25,
+              47.05
+            ],
+            [
+              7.22,
+              47.0
+            ],
+            [
+              7.12,
+              47.0
+            ],
+            [
+              7.08,
+              47.04
+            ],
+            [
+              7.1,
+              47.08
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "be-aare-bern",
+        "name": {
+          "de": "Aare (Bern Stadt)",
+          "en": "Aare (City of Bern)"
+        },
+        "canton": "BE",
+        "waterKind": "river",
+        "permitType": "pacht",
+        "permitSummary": {
+          "de": "Illustrativ Pachtgewässer / Vereinsstrecke — Patent allein reicht oft nicht; Pächter / Club kontaktieren.",
+          "en": "Illustrative leased / club stretch — cantonal patent alone often not enough; contact lessee/club."
+        },
+        "buyUrl": "https://www.sfv-fsp.ch/",
+        "buyLabel": {
+          "de": "SFV / lokalen Pächter finden",
+          "en": "SFV / find local lessee"
+        },
+        "notes": {
+          "de": "MOCK: Pacht-Beispiel zur Kaufpfad-UX (nicht echte Pächterzuordnung).",
+          "en": "MOCK: Lease example for buy-path UX (not a real lessee mapping)."
+        },
+        "speciesHint": {
+          "de": "Äsche, Forelle",
+          "en": "Grayling, trout"
+        },
+        "mock": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            7.43,
+            46.93
+          ],
+          [
+            7.45,
+            46.94
+          ],
+          [
+            7.47,
+            46.95
+          ],
+          [
+            7.45,
+            46.96
+          ],
+          [
+            7.44,
+            46.97
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "be-wohlensee",
+        "name": {
+          "de": "Wohlensee",
+          "en": "Lake Wohlen"
+        },
+        "canton": "BE",
+        "waterKind": "lake",
+        "permitType": "freiangel",
+        "permitSummary": {
+          "de": "Illustrativ Freiangel / eingeschränkt frei — Bedingungen & Verbote trotzdem prüfen.",
+          "en": "Illustrative free angling / limited free — still check conditions & bans."
+        },
+        "buyUrl": "https://www.be.ch/de/start/themen/umwelt/fischerei.html",
+        "buyLabel": {
+          "de": "Bedingungen bei BE prüfen",
+          "en": "Check conditions with BE"
+        },
+        "notes": {
+          "de": "MOCK: Freiangel heisst nicht 'überall erlaubt'.",
+          "en": "MOCK: Free angling does not mean 'allowed everywhere'."
+        },
+        "speciesHint": {
+          "de": "Cypriniden, Hecht",
+          "en": "Cyprinids, pike"
+        },
+        "mock": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              7.28,
+              46.96
+            ],
+            [
+              7.35,
+              46.97
+            ],
+            [
+              7.38,
+              46.95
+            ],
+            [
+              7.35,
+              46.93
+            ],
+            [
+              7.28,
+              46.94
+            ],
+            [
+              7.28,
+              46.96
+            ]
+          ]
+        ]
+      }
+    }
+  ],
+  "_meta": {
+    "mock": true,
+    "scope": "ZH+BE",
+    "note": "Simplified geometries for prototype only. Not survey-grade. Not legal advice."
+  }
+}
