@@ -1,6 +1,8 @@
-import type { Lang, WaterProps } from '../types/water'
-import { PERMIT_COLORS, PERMIT_LABELS } from '../types/water'
-import { t } from '../i18n/copy'
+'use client'
+
+import type { Lang, WaterProps } from '@/types/water'
+import { PERMIT_COLORS, PERMIT_LABELS } from '@/types/water'
+import { t } from '@/i18n/copy'
 
 type Props = {
   water: WaterProps | null

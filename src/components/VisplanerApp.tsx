@@ -1,12 +1,15 @@
-import { useMemo, useState } from 'react'
-import { MapView } from './components/MapView'
-import { InfoPanel } from './components/InfoPanel'
-import { Legend } from './components/Legend'
-import type { Lang, WaterProps } from './types/water'
-import { t } from './i18n/copy'
-import './App.css'
+'use client'
 
-function App() {
+import { useMemo, useState } from 'react'
+import dynamic from 'next/dynamic'
+import { InfoPanel } from './InfoPanel'
+import { Legend } from './Legend'
+
+const MapView = dynamic(() => import('./MapView').then((m) => m.MapView), { ssr: false })
+import type { Lang, WaterProps } from '@/types/water'
+import { t } from '@/i18n/copy'
+
+export function VisplanerApp() {
   const [lang, setLang] = useState<Lang>('de')
   const [selected, setSelected] = useState<WaterProps | null>(null)
   const selectedId = useMemo(() => selected?.id ?? null, [selected])
@@ -51,5 +54,3 @@ function App() {
     </div>
   )
 }
-
-export default App

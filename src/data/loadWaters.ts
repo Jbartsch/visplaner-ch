@@ -13,8 +13,7 @@ let raw: FC | null = null
 
 export async function loadWaters(): Promise<FC> {
   if (raw) return raw
-  const base = import.meta.env.BASE_URL
-  const res = await fetch(`${base}data/waters.geojson`)
+  const res = await fetch('/data/waters.geojson')
   raw = (await res.json()) as FC
   cache = new Map(raw.features.map((f) => [f.properties.id, f.properties]))
   return raw

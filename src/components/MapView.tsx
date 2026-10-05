@@ -1,9 +1,10 @@
+'use client'
+
 import { useEffect, useRef } from 'react'
 import * as maplibregl from 'maplibre-gl'
-import 'maplibre-gl/dist/maplibre-gl.css'
-import { getWaterById, loadWaters } from '../data/loadWaters'
-import type { WaterProps } from '../types/water'
-import { PERMIT_COLORS } from '../types/water'
+import { getWaterById, loadWaters } from '@/data/loadWaters'
+import type { WaterProps } from '@/types/water'
+import { PERMIT_COLORS } from '@/types/water'
 
 type Props = {
   onSelect: (water: WaterProps | null) => void
