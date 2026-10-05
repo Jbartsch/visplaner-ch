@@ -29,3 +29,5 @@ out
 next-env.d.ts
 *.tsbuildinfo
 .vercel
+data-raw/
+public/maplibre/
