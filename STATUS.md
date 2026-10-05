@@ -1,12 +1,29 @@
 # STATUS.md — visplaner-ch
 
-**Updated:** 2026-10-05 ~21:00 Europe/Zurich
+**Updated:** 2026-10-05 ~21:25 Europe/Zurich
 
-## Live URL
-https://jbartsch.github.io/visplaner-ch/
+## Live URLs
+| | URL |
+|---|---|
+| **Production (Vercel, primary)** | https://visplaner-ch.vercel.app |
+| Vercel project | https://vercel.com/innoveto/visplaner-ch (team Innoveto, `fra1`) |
+| PR preview (example, PR #1) | https://visplaner-ch-git-feat-real-gis-zh-be-innoveto.vercel.app (Vercel Authentication — team login required) |
+| Legacy GitHub Pages (old Vite MVP, frozen) | https://jbartsch.github.io/visplaner-ch/ |
 
 ## Repo URL
 https://github.com/Jbartsch/visplaner-ch
+
+## v0.2 — Next.js + real data (2026-10-05)
+- Migrated Vite → **Next.js 16 App Router** (`636be9b` on `main`), Vercel Git-linked; PRs get Preview Deployments.
+- PR #1 `feat/real-gis-zh-be`: ~330 waters from **ZH OGD Fischereireviere** (official) + **BE patent list on swisstopo geometry** (derived),
+  search/filter (name, canton, permit type), richer permit→buy panel (price guide, SaNa, day ticket, enquire fallback, species/season),
+  about strip, DE/EN/FR, official **BE ANGFISCH WMS overlay** via `/api/be-wms`, shareable deep links. Data docs: `docs/DATA.md`.
+- Blockers: all `*.be.ch` hosts + Overpass are TLS-reset from the build box → BE vector data derived; official BE map shown as WMS (fetched by Vercel, not the box).
+  Box `VERCEL_TOKEN` is scoped to project `kobayashi` only (403 on create; cannot read visplaner-ch deployments) — Jonas linked the project manually.
+
+---
+
+## Previous (v0.1 MVP)
 
 ## Doc paths
 | File | Path |
@@ -52,4 +69,6 @@ Flow: fullscreen map → tap water → info panel with **permit type** (Patent /
 - [x] Permit-type legend + info panel + buy CTA
 - [x] MOCK banner + disclaimer
 - [x] DE/EN toggle
-- [x] Live GitHub Pages preview
+- [x] Live GitHub Pages preview (legacy)
+- [x] Vercel production + PR previews (Next.js)
+- [x] Real ZH OGD data, derived BE data, search/filter, DE/EN/FR
