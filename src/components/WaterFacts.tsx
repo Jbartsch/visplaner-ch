@@ -116,7 +116,7 @@ export function WaterFacts({ w, c, border, lang, access, source }: { w: Water; c
         </div>
       )}
 
-      <section className="buy" aria-label={t('whereToBuy', lang)}>
+      <section className="buy" id="buy" aria-label={t('whereToBuy', lang)}>
         <h3>
           {lessee ? t('findLessee', lang) : t('whereToBuy', lang)} · <span className="muted">{loc(PERMIT_WHERE[w.p], lang)}</span>
         </h3>

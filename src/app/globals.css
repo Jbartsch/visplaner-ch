@@ -398,3 +398,39 @@ html, body, #root { margin: 0; height: 100%; }
 }
 .start-links { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .map-cta.secondary { background: #fff; color: #0f766e; border: 2px solid #0f766e; }
+
+/* ---------- five questions (QuickAnswers) ---------- */
+.qa5 { border: 1px solid var(--line); border-radius: 12px; background: #fff; overflow: hidden; }
+.qa-row + .qa-row { border-top: 1px solid var(--line); }
+.qa-row > summary { list-style: none; display: flex; gap: 0.55rem; align-items: flex-start; padding: 0.5rem 0.65rem; cursor: pointer; }
+.qa-row > summary::-webkit-details-marker { display: none; }
+.qa-row > summary::after { content: '›'; margin-left: auto; color: var(--muted); font-size: 1.1rem; line-height: 1.2; transition: transform 0.15s; }
+.qa-row[open] > summary::after { transform: rotate(90deg); }
+.qa-row > summary:hover { background: #f8fafc; }
+.qa-icon { font-size: 1rem; line-height: 1.35; width: 1.3rem; text-align: center; flex: none; }
+.qa-text { display: flex; flex-direction: column; min-width: 0; }
+.qa-q { font-size: 0.78rem; font-weight: 600; color: var(--muted); line-height: 1.3; }
+.qa-a { font-size: 0.88rem; line-height: 1.35; color: var(--ink); }
+.qa-a.missing, .qa5 .missing { color: #94a3b8; font-style: italic; }
+.qa-body { padding: 0.1rem 0.75rem 0.7rem 2.5rem; font-size: 0.85rem; display: grid; gap: 0.4rem; }
+.qa-body p, .qa-body ul { margin: 0; }
+.qa-body ul { padding-left: 1.1rem; }
+.qa-body h4 { margin: 0.3rem 0 0; font-size: 0.8rem; }
+.ptable { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+.ptable th, .ptable td { text-align: left; vertical-align: top; padding: 0.25rem 0.35rem; border-bottom: 1px solid var(--line); }
+.ptable thead th { font-size: 0.72rem; color: var(--muted); font-weight: 600; }
+.ptable tbody th { font-weight: 600; }
+.plist, .zlist { list-style: none; padding: 0 !important; display: grid; gap: 0.3rem; }
+.zsw { display: inline-block; width: 0.8rem; height: 0.8rem; border-radius: 2px; vertical-align: -1px; }
+.zsw.fish { background: repeating-linear-gradient(45deg, #dc2626 0 2px, #fecaca 2px 5px); border: 1px solid #dc2626; }
+.zsw.wzvv { background: rgba(124, 58, 237, 0.18); border: 1.5px dashed #7c3aed; }
+.qrow { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.4rem; }
+.qrow a, .qrow button { font: inherit; font-size: 0.74rem; color: var(--ink); background: #f1f5f9; border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem 0.6rem; text-decoration: none; cursor: pointer; }
+.qrow a:hover, .qrow button:hover { background: #e2e8f0; }
+.page-main .qa5 .qa-a { font-size: 0.95rem; }
+@media (max-width: 880px) {
+  .qa-row > summary { padding: 0.42rem 0.55rem; }
+  .qa-q { font-size: 0.74rem; }
+  .qa-a { font-size: 0.84rem; }
+}
+.pk-dot { display: inline-flex; align-items: center; justify-content: center; width: 1rem; height: 1rem; border-radius: 999px; background: #1d4ed8; color: #fff; font-size: 0.6rem; font-weight: 700; }

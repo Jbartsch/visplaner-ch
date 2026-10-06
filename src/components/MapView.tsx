@@ -5,6 +5,7 @@ import * as maplibregl from 'maplibre-gl'
 import { loadCantonGeo, loadOverview } from '@/data/loadWaters'
 import type { Bbox, Canton, CantonInfo, PermitType } from '@/types/water'
 import { PERMIT_COLORS } from '@/types/water'
+import type { Parking } from '@/lib/rules'
 
 type Props = {
   cantonInfo: Record<Canton, CantonInfo>
@@ -19,6 +20,9 @@ type Props = {
   onSelect: (id: string | null) => void
   onCanton: (c: Canton) => void
   onDetail: (loaded: number) => void
+  zones: boolean
+  parking: Parking[]
+  flyTo: { p: Parking; seq: number } | null
 }
 
 const COLOR = [
@@ -145,6 +149,44 @@ export function MapView(props: Props) {
       map.on('moveend', () => {
         if (!ovDone) loadOv()
       })
+      // no-fishing / protected zones (BE, TG cantonal OGD; federal WZVV) – hatched red / dashed purple
+      const sz = 8
+      const img = new Uint8Array(sz * sz * 4)
+      for (let y = 0; y < sz; y++)
+        for (let x = 0; x < sz; x++) {
+          const on = (x + y) % sz < 2
+          const i = (y * sz + x) * 4
+          img.set(on ? [220, 38, 38, 210] : [254, 202, 202, 70], i)
+        }
+      map.addImage('hatch', { width: sz, height: sz, data: img })
+      map.addSource('zones', { type: 'geojson', data: '/data/zones.geojson', attribution: 'Schongebiete © Kanton BE, Kanton TG · WZVV © BAFU' })
+      map.addLayer({ id: 'zones-wzvv', type: 'fill', source: 'zones', minzoom: 8, filter: ['==', ['get', 'k'], 'wzvv'], paint: { 'fill-color': '#7c3aed', 'fill-opacity': 0.1 } })
+      map.addLayer({ id: 'zones-wzvv-line', type: 'line', source: 'zones', minzoom: 8, filter: ['==', ['get', 'k'], 'wzvv'], paint: { 'line-color': '#7c3aed', 'line-width': 1.5, 'line-dasharray': [2, 2] } })
+      map.addLayer({ id: 'zones-fish', type: 'fill', source: 'zones', minzoom: 8, filter: ['==', ['get', 'k'], 'fish'], paint: { 'fill-pattern': 'hatch' } })
+      map.addLayer({ id: 'zones-fish-line', type: 'line', source: 'zones', minzoom: 8, filter: ['==', ['get', 'k'], 'fish'], paint: { 'line-color': '#dc2626', 'line-width': 1.4 } })
+      map.addSource('pk', { type: 'geojson', data: empty, attribution: 'Parkplätze © OpenStreetMap-Mitwirkende (ODbL)' })
+      // "P" marker drawn on a canvas (the style has no glyphs)
+      const cv = document.createElement('canvas')
+      const dpr = 2
+      cv.width = cv.height = 22 * dpr
+      const g = cv.getContext('2d')
+      if (g) {
+        g.scale(dpr, dpr)
+        g.fillStyle = '#1d4ed8'
+        g.strokeStyle = '#fff'
+        g.lineWidth = 2
+        g.beginPath()
+        g.roundRect(1, 1, 20, 20, 5)
+        g.fill()
+        g.stroke()
+        g.fillStyle = '#fff'
+        g.font = 'bold 14px system-ui, sans-serif'
+        g.textAlign = 'center'
+        g.textBaseline = 'middle'
+        g.fillText('P', 11, 12)
+        map.addImage('pk-icon', g.getImageData(0, 0, cv.width, cv.height), { pixelRatio: dpr })
+      }
+      map.addLayer({ id: 'pk-icon', type: 'symbol', source: 'pk', layout: { 'icon-image': 'pk-icon', 'icon-allow-overlap': true } })
       apply.current()
       ensure.current()
 
@@ -219,6 +261,12 @@ export function MapView(props: Props) {
       map.setFilter('cshape-sel', ['in', ['get', 'c'], ['literal', selectedCanton ? [selectedCanton] : cantons.length <= 3 ? cantons : []]])
       map.setLayoutProperty('be-official', 'visibility', overlay ? 'visible' : 'none')
       map.setLayoutProperty('ag-official', 'visibility', overlay ? 'visible' : 'none')
+      const zv = cb.current.zones ? 'visible' : 'none'
+      for (const id of ['zones-wzvv', 'zones-wzvv-line', 'zones-fish', 'zones-fish-line']) if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', zv)
+      ;(map.getSource('pk') as maplibregl.GeoJSONSource | undefined)?.setData({
+        type: 'FeatureCollection',
+        features: cb.current.parking.map((p) => ({ type: 'Feature', properties: { id: p.id }, geometry: { type: 'Point', coordinates: [p.lon, p.lat] } })),
+      } as never)
     }
 
     return () => {
@@ -230,7 +278,13 @@ export function MapView(props: Props) {
   useEffect(() => {
     apply.current()
     ensure.current()
-  }, [props.cantons, props.types, props.selectedId, props.overlay, props.selectedCanton, props.freeOnly, props.noSanaOnly])
+  }, [props.cantons, props.types, props.selectedId, props.overlay, props.selectedCanton, props.freeOnly, props.noSanaOnly, props.zones, props.parking])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !props.flyTo) return
+    map.flyTo({ center: [props.flyTo.p.lon, props.flyTo.p.lat], zoom: Math.max(map.getZoom(), 15), duration: 800 })
+  }, [props.flyTo])
 
   useEffect(() => {
     const map = mapRef.current

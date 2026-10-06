@@ -11,6 +11,7 @@ import type { Bbox, Canton, Lang, PermitType } from '@/types/water'
 import { CANTON_CODES, LANGS, PERMIT_ORDER } from '@/types/water'
 import { borderOf, reportUrl, searchText } from '@/lib/water'
 import { t } from '@/i18n/copy'
+import type { Parking } from '@/lib/rules'
 
 const MapView = dynamic(() => import('./MapView').then((m) => m.MapView), {
   ssr: false,
@@ -31,6 +32,9 @@ export function VisplanerApp({ initialLang = 'de' }: { initialLang?: Lang }) {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [freeOnly, setFreeOnly] = useState(false)
   const [noSanaOnly, setNoSanaOnly] = useState(false)
+  const [zones, setZones] = useState(true)
+  const [parking, setParking] = useState<{ id: string; pk: Parking[] } | null>(null)
+  const [flyTo, setFlyTo] = useState<{ p: Parking; seq: number } | null>(null)
 
   useEffect(() => {
     loadAppData().then(setData, (e: unknown) => setError(String(e)))
@@ -164,11 +168,14 @@ export function VisplanerApp({ initialLang = 'de' }: { initialLang?: Lang }) {
               onSelect={(id) => (id ? pick(id) : setSelectedId(null))}
               onCanton={(c) => chooseCanton(c)}
               onDetail={setDetailLoaded}
+              zones={zones}
+              parking={parking && parking.id === selectedId ? parking.pk : []}
+              flyTo={flyTo}
             />
           ) : (
             <div className="map map-loading">{error ?? t('loading', lang)}</div>
           )}
-          <Legend lang={lang} types={types} counts={counts} onToggle={toggleType} overlay={overlay} onOverlay={setOverlay} showZoomHint={detailLoaded === 0} />
+          <Legend lang={lang} types={types} counts={counts} onToggle={toggleType} overlay={overlay} onOverlay={setOverlay} zones={zones} onZones={setZones} parking={!!(parking && parking.id === selectedId && parking.pk.length)} showZoomHint={detailLoaded === 0} />
         </div>
         <aside className={sheetOpen || selected ? 'panel open' : 'panel'}>
           <button type="button" className="sheet-handle" onClick={() => setSheetOpen((o) => !o)} aria-label="toggle panel">
@@ -184,6 +191,11 @@ export function VisplanerApp({ initialLang = 'de' }: { initialLang?: Lang }) {
               lang={lang}
               onBack={() => setSelectedId(null)}
               onCanton={() => chooseCanton(selected.c)}
+              onGeo={(id, g) => setParking({ id, pk: g?.pk ?? [] })}
+              onParking={(p) => {
+                setFlyTo((f) => ({ p, seq: (f?.seq ?? 0) + 1 }))
+                if (window.matchMedia('(max-width: 880px)').matches) setSheetOpen(false)
+              }}
             />
           ) : data ? (
             <SidePanel

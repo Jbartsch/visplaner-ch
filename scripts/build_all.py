@@ -128,7 +128,8 @@ S_ZH = src('zh', 'Kanton Zürich OGD · Fischereireviere', CANTONS['ZH']['source
            {'de': 'Datenstand 2010', 'en': 'data as of 2010', 'fr': 'données de 2010', 'it': 'dati del 2010'})
 still = gpd.read_file(RAW / 'zh_stillgewaesser_f.geojson').to_crs(LV95)
 net = gpd.read_file(RAW / 'zh_gewaessernetz_l.geojson').to_crs(LV95)
-ZH_LAKES = {1: ('Zürichsee', 'zuerichsee'), 2: ('Greifensee', None), 3: ('Pfäffikersee', None)}
+# Revier 2 = Pfäffikersee, 3 = Greifensee (checked against geometry: Pfäffikersee lies east, ~8.78°E)
+ZH_LAKES = {1: ('Zürichsee', 'zuerichsee'), 2: ('Pfäffikersee', None), 3: ('Greifensee', None)}
 for nr, (de, border) in ZH_LAKES.items():
     g = unary_union(still[still.reviernummer == nr].geometry)
     names = BORDER['Zürichsee']['name'] if border else None
