@@ -25,12 +25,22 @@ type Props = {
   noSanaOnly: boolean
   onFree: (v: boolean) => void
   onNoSana: (v: boolean) => void
+  ask: string | null
+  onAsk: (id: string | null) => void
 }
+
+const QS = [
+  ['permit', '🎫', 'qPermit'],
+  ['park', '🅿️', 'qPark'],
+  ['rules', '📋', 'qRules'],
+  ['catch', '🐟', 'qCatch'],
+  ['ban', '🚫', 'qBan'],
+] as const
 
 const KIND_RANK = { lake: 0, river: 1, canal: 2, reach: 3, pond: 4 } as const
 const Q_RANK = { official: 0, derived: 1, stub: 2 } as const
 
-export function SidePanel({ lang, waters, hay, cantonInfo, order, query, onQuery, canton, onCanton, types, onToggleType, onPick, freeOnly, noSanaOnly, onFree, onNoSana }: Props) {
+export function SidePanel({ lang, waters, hay, cantonInfo, order, query, onQuery, canton, onCanton, types, onToggleType, onPick, freeOnly, noSanaOnly, onFree, onNoSana, ask, onAsk }: Props) {
   const [limit, setLimit] = useState(40)
   const terms = useMemo(() => normalize(query.trim()).split(/\s+/).filter(Boolean), [query])
   const results = useMemo(() => {
@@ -81,6 +91,23 @@ export function SidePanel({ lang, waters, hay, cantonInfo, order, query, onQuery
         <button type="button" aria-pressed={!canton} onClick={() => onCanton(null)}>
           {t('allCantonsShort', lang)}
         </button>
+      </div>
+      <div className="qrow" role="group" aria-label={t('qaTitle', lang)}>
+        <span className="muted small">{t('qaIntro', lang)}</span>
+        {QS.map(([id, icon, key]) => (
+          <button
+            key={id}
+            type="button"
+            aria-pressed={ask === id}
+            onClick={() => {
+              onAsk(ask === id ? null : id)
+              document.querySelector<HTMLInputElement>('.side .search')?.focus()
+            }}
+          >
+            {icon} {t(key, lang)}
+          </button>
+        ))}
+        {ask && <span className="muted small qa-pick">{t('qaPick', lang)}</span>}
       </div>
       <div className="canton-row">
         <label className="sr-only" htmlFor="canton-select">

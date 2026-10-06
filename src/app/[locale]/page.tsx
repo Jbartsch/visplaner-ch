@@ -23,7 +23,15 @@ export default async function LocaleHome({ params }: { params: Promise<Params> }
   const lang = locale as Lang
   const tiers = { official: 0, derived: 0, stub: 0 }
   for (const c of Object.values(CF.cantons)) tiers[c.quality]++
+  const five = [
+    { id: 'permit', icon: '🎫', q: t('qPermit', lang), a: t('hPermit', lang) },
+    { id: 'park', icon: '🅿️', q: t('qPark', lang), a: t('hPark', lang) },
+    { id: 'rules', icon: '📋', q: t('qRules', lang), a: t('hRules', lang) },
+    { id: 'catch', icon: '🐟', q: t('qCatch', lang), a: t('hCatch', lang) },
+    { id: 'ban', icon: '🚫', q: t('qBan', lang), a: t('hBan', lang) },
+  ]
   const qa = [
+    ...five,
     { q: p('qNational', lang), a: p('aNational', lang) },
     { q: p('qPatentPacht', lang), a: p('aPatentPacht', lang) },
     { q: p('qReliable', lang), a: `${loc(QUALITY_LABELS.official, lang)}: ${tiers.official} · ${loc(QUALITY_LABELS.derived, lang)}: ${tiers.derived} · ${loc(QUALITY_LABELS.stub, lang)}: ${tiers.stub}. ${t('disclaimer', lang)}` },
@@ -43,6 +51,16 @@ export default async function LocaleHome({ params }: { params: Promise<Params> }
           <a className="map-cta" href={`/?canton=BE&lang=${lang}`}>🗺 Bern</a>{' '}
           <a className="map-cta secondary" href={`/?lang=${lang}`}>{p('openMapAll', lang)}</a>
         </p>
+        <nav className="qrow" aria-label={t('qaTitle', lang)}>
+          <span className="muted small">
+            {t('qaIntro', lang)} ({{ de: 'Beispiel', en: 'example', fr: 'exemple', it: 'esempio' }[lang]}: Zürichsee)
+          </span>
+          {five.map((f) => (
+            <a key={f.id} href={`/?w=zuerichsee-zh&ask=${f.id}&lang=${lang}`}>
+              {f.icon} {f.q}
+            </a>
+          ))}
+        </nav>
       </section>
       <section className="card">
         <table className="ctable">

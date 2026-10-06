@@ -434,3 +434,6 @@ html, body, #root { margin: 0; height: 100%; }
   .qa-a { font-size: 0.84rem; }
 }
 .pk-dot { display: inline-flex; align-items: center; justify-content: center; width: 1rem; height: 1rem; border-radius: 999px; background: #1d4ed8; color: #fff; font-size: 0.6rem; font-weight: 700; }
+.qrow .qa-pick { flex-basis: 100%; }
+.qrow button[aria-pressed='true'] { background: #ccfbf1; border-color: var(--accent); }
+.qrow > .muted { align-self: center; margin-right: 0.15rem; }

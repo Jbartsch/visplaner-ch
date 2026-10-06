@@ -33,6 +33,7 @@ export function VisplanerApp({ initialLang = 'de' }: { initialLang?: Lang }) {
   const [freeOnly, setFreeOnly] = useState(false)
   const [noSanaOnly, setNoSanaOnly] = useState(false)
   const [zones, setZones] = useState(true)
+  const [ask, setAsk] = useState<string | null>(null)
   const [parking, setParking] = useState<{ id: string; pk: Parking[] } | null>(null)
   const [flyTo, setFlyTo] = useState<{ p: Parking; seq: number } | null>(null)
 
@@ -59,6 +60,8 @@ export function VisplanerApp({ initialLang = 'de' }: { initialLang?: Lang }) {
     if (c && (CANTON_CODES as readonly string[]).includes(c)) setCanton(c as Canton)
     if (params.get('free') === '1') setFreeOnly(true)
     if (params.get('nosana') === '1') setNoSanaOnly(true)
+    const a = params.get('ask')
+    if (a && ['permit', 'park', 'rules', 'catch', 'ban'].includes(a)) setAsk(a)
   }, [initialLang])
 
   const byId = useMemo(() => new Map((data?.waters ?? []).map((w) => [w.id, w])), [data])
@@ -192,6 +195,7 @@ export function VisplanerApp({ initialLang = 'de' }: { initialLang?: Lang }) {
               onBack={() => setSelectedId(null)}
               onCanton={() => chooseCanton(selected.c)}
               onGeo={(id, g) => setParking({ id, pk: g?.pk ?? [] })}
+              ask={ask}
               onParking={(p) => {
                 setFlyTo((f) => ({ p, seq: (f?.seq ?? 0) + 1 }))
                 if (window.matchMedia('(max-width: 880px)').matches) setSheetOpen(false)
@@ -218,6 +222,8 @@ export function VisplanerApp({ initialLang = 'de' }: { initialLang?: Lang }) {
               noSanaOnly={noSanaOnly}
               onFree={setFreeOnly}
               onNoSana={setNoSanaOnly}
+              ask={ask}
+              onAsk={setAsk}
             />
           ) : (
             <p className="muted">{error ?? t('loading', lang)}</p>

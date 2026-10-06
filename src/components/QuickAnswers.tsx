@@ -14,6 +14,8 @@ type Props = {
   geo: WaterGeoExtra | null | undefined
   /** expand all rows (SSR water page: crawlable + readable) */
   open?: boolean
+  /** open just this row (e.g. ask=park from the landing page) */
+  openId?: string
   onParking?: (p: Parking) => void
 }
 
@@ -56,7 +58,8 @@ function Row({ id, icon, q, a, open, missing, children }: { id: string; icon: st
 const fee = (f: string | undefined, lang: Lang) => (!f ? '' : f === 'yes' ? t('feeYes', lang) : f === 'no' ? t('feeNo', lang) : f)
 
 /** The five questions anglers ask first – compact answer rows directly under the water name. Server-safe. */
-export function QuickAnswers({ w, c, lang, rules, geo, open, onParking }: Props) {
+export function QuickAnswers({ w, c, lang, rules, geo, open, openId, onParking }: Props) {
+  const o = (id: string) => open || openId === id
   const r = rulesFor(w, rules)
   const nd = t('notInData', lang)
   const loading = t('loadingShort', lang)
@@ -96,7 +99,7 @@ export function QuickAnswers({ w, c, lang, rules, geo, open, onParking }: Props)
   const fed = rules?.federal
   return (
     <section className="qa5" aria-label={t('qaTitle', lang)}>
-      <Row id="q-permit" icon="🎫" q={t('qPermit', lang)} a={permitA} open={open} missing={!closed && !ps && !hint}>
+      <Row id="q-permit" icon="🎫" q={t('qPermit', lang)} a={permitA} open={o('permit')} missing={!closed && !ps && !hint}>
         {r?.label && r.scoped && (
           <p className="small muted">
             {t('appliesTo', lang)}: {loc(r.label, lang)}
@@ -145,7 +148,7 @@ export function QuickAnswers({ w, c, lang, rules, geo, open, onParking }: Props)
         )}
       </Row>
 
-      <Row id="q-park" icon="🅿️" q={t('qPark', lang)} a={parkA} open={open} missing={geo !== undefined && !pk.length}>
+      <Row id="q-park" icon="🅿️" q={t('qPark', lang)} a={parkA} open={o('park')} missing={geo !== undefined && !pk.length}>
         {pk.length ? (
           <ul className="plist">
             {pk.map((p) => (
@@ -182,7 +185,7 @@ export function QuickAnswers({ w, c, lang, rules, geo, open, onParking }: Props)
         <p className="small muted">{t('parkNote', lang).replace('{d}', OSM_AS_OF)}</p>
       </Row>
 
-      <Row id="q-rules" icon="📋" q={t('qRules', lang)} a={rulesA} open={open} missing={!r?.closed?.length && !r?.sizes?.length}>
+      <Row id="q-rules" icon="📋" q={t('qRules', lang)} a={rulesA} open={o('rules')} missing={!r?.closed?.length && !r?.sizes?.length}>
         {r?.label && r.scoped && (r.closed?.length || r.sizes?.length) ? (
           <p className="small muted">
             {t('appliesTo', lang)}: {loc(r.label, lang)}
@@ -253,7 +256,7 @@ export function QuickAnswers({ w, c, lang, rules, geo, open, onParking }: Props)
         )}
       </Row>
 
-      <Row id="q-catch" icon="🐟" q={t('qCatch', lang)} a={catchA} open={open} missing={!r?.catch?.length}>
+      <Row id="q-catch" icon="🐟" q={t('qCatch', lang)} a={catchA} open={o('catch')} missing={!r?.catch?.length}>
         {r?.catch?.length ? (
           <>
             <table className="ptable">
@@ -296,7 +299,7 @@ export function QuickAnswers({ w, c, lang, rules, geo, open, onParking }: Props)
         )}
       </Row>
 
-      <Row id="q-ban" icon="🚫" q={t('qBan', lang)} a={banA} open={open} missing={!closed && !zs.length && !r?.zones}>
+      <Row id="q-ban" icon="🚫" q={t('qBan', lang)} a={banA} open={o('ban')} missing={!closed && !zs.length && !r?.zones}>
         {closed && <p>{t('banClosed', lang)}</p>}
         {zs.length > 0 && (
           <ul className="zlist">

@@ -21,9 +21,10 @@ type Props = {
   onCanton: () => void
   onParking?: (p: Parking) => void
   onGeo?: (id: string, g: WaterGeoExtra | null) => void
+  ask?: string | null
 }
 
-export function InfoPanel({ w: base, c, border, source, access, lang, onBack, onCanton, onParking, onGeo }: Props) {
+export function InfoPanel({ w: base, c, border, source, access, lang, onBack, onCanton, onParking, onGeo, ask }: Props) {
   const [rules, setRules] = useState<RulesFile | null | undefined>(undefined)
   const [geo, setGeo] = useState<{ id: string; g: WaterGeoExtra | null } | null>(null)
   useEffect(() => {
@@ -100,7 +101,7 @@ export function InfoPanel({ w: base, c, border, source, access, lang, onBack, on
           </div>
         </div>
       </div>
-      <QuickAnswers w={w} c={c} lang={lang} rules={rules} geo={geo?.id === base.id ? geo.g : undefined} onParking={onParking} />
+      <QuickAnswers w={w} c={c} lang={lang} rules={rules} geo={geo?.id === base.id ? geo.g : undefined} openId={ask ?? undefined} onParking={onParking} key={`${base.id}-${ask ?? ''}`} />
       <WaterFacts w={w} c={c} border={border} lang={lang} access={access} source={source} />
       <p className="source">
         <a href={`/${lang}/gewaesser/${w.slug}`}>{t('detailsPage', lang)} →</a> ·{' '}
