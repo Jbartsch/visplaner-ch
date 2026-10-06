@@ -18,10 +18,10 @@ const P = {
     it: 'Pescare a {name} (Cantone {canton}): {permit}. {where}. Qualità dei dati: {quality}. Solo informazione.',
   },
   answerWater: {
-    de: 'Für {name} (Kanton {canton}) gilt laut unseren Daten: {permit}.',
-    en: 'According to our data, {name} (canton {canton}) is: {permit}.',
-    fr: 'Selon nos données, {name} (canton {canton}) relève de : {permit}.',
-    it: 'Secondo i nostri dati, per {name} (Cantone {canton}) vale: {permit}.',
+    de: 'Der Eintrag «{name}» (Kanton {canton}) ist als «{permit}» erfasst. Prüfe vor dem Kauf den Geltungsbereich für deinen geplanten Angelplatz.',
+    en: 'The entry “{name}” (canton {canton}) is classified as “{permit}”. Before buying, check that this covers the spot where you plan to fish.',
+    fr: 'L’entrée « {name} » (canton {canton}) est classée « {permit} ». Avant d’acheter, vérifiez que cela couvre l’endroit où vous comptez pêcher.',
+    it: 'La voce «{name}» (Cantone {canton}) è classificata come «{permit}». Prima di acquistare verifica che copra il luogo dove intendi pescare.',
   },
   answerStub: {
     de: 'Für {name} (Kanton {canton}) ist der Bewilligungstyp in unseren Daten nicht bestimmt (unvollständig). Bitte vor dem Fischen beim Kanton nachfragen.',
@@ -50,10 +50,10 @@ const P = {
     it: 'Nei nostri dati nessuna acqua è segnata come pesca libera per {canton}. Ciò non significa che non ce ne siano – verificare le regole cantonali.',
   },
   aWhereNone: {
-    de: 'Für diesen Gewässertyp ist kein offizieller Online-Kauf hinterlegt: {where}.',
-    en: 'No official online purchase is on file for this type of water: {where}.',
-    fr: 'Aucun achat en ligne officiel n’est répertorié pour ce type d’eau : {where}.',
-    it: 'Nessun acquisto online ufficiale registrato per questo tipo di acqua: {where}.',
+    de: 'Für diesen Gewässertyp ist kein Online-Kauf beim Kanton hinterlegt: {where}.',
+    en: 'No online purchase from the canton is on file for this type of water: {where}.',
+    fr: 'Aucun achat en ligne du canton n’est répertorié pour ce type d’eau : {where}.',
+    it: 'Nessun acquisto online del Cantone registrato per questo tipo di acqua: {where}.',
   },
   aReliable: {
     de: 'Datenqualität «{quality}»: {help} Quelle: {source}. Massgebend sind immer die kantonalen Vorschriften.',
@@ -84,10 +84,10 @@ const P = {
     it: 'Quale patente di pesca serve in Svizzera – patente cantonale, affitto o pesca libera – e dove acquistarla? Tutti i 26 cantoni con qualità dei dati.',
   },
   homeAnswer: {
-    de: 'In der Schweiz regelt jeder Kanton die Angelfischerei selbst – es gibt keinen nationalen Fischerpass. Je nach Gewässer brauchst du ein Kantonspatent, eine Karte vom Pächter, oder (an wenigen Orten) gar nichts. Wähle deinen Kanton:',
-    en: 'In Switzerland each canton regulates angling itself – there is no national fishing licence. Depending on the water you need a cantonal permit, a card from the lessee, or (in a few places) nothing at all. Pick your canton:',
-    fr: 'En Suisse, chaque canton règle la pêche – il n’existe pas de permis national. Selon le plan d’eau, il faut un permis cantonal, une carte du fermier ou (rarement) rien. Choisissez votre canton :',
-    it: 'In Svizzera ogni cantone regola la pesca – non esiste una patente nazionale. A seconda dell’acqua serve una patente cantonale, una tessera dell’affittuario o (raramente) niente. Scegli il tuo cantone:',
+    de: 'In der Schweiz regelt jeder Kanton die Angelfischerei selbst – es gibt keinen nationalen Fischerpass. Je nach Gewässer brauchst du ein Kantonspatent, eine Karte vom Pächter – oder du darfst im Rahmen des Freiangelrechts unter bestimmten Bedingungen ohne Patent fischen. Wähle deinen Kanton:',
+    en: 'In Switzerland each canton regulates angling itself – there is no national fishing licence. Depending on the water you need a cantonal permit, a card from the lessee – or, under a free-angling right, you may fish without a permit under specific conditions. Pick your canton:',
+    fr: 'En Suisse, chaque canton règle la pêche – il n’existe pas de permis national. Selon le plan d’eau, il faut un permis cantonal, l’autorisation du détenteur du droit de pêche, ou vous pouvez pêcher sans permis dans le cadre du droit de pêche libre, sous conditions. Choisissez votre canton :',
+    it: 'In Svizzera ogni cantone regola la pesca – non esiste una patente nazionale. A seconda dell’acqua serve una patente cantonale, una tessera dell’affittuario – oppure, dove vige il diritto di pesca libera, si può pescare senza patente a determinate condizioni. Scegli il tuo cantone:',
   },
   qNational: { de: 'Gibt es ein Fischereipatent für die ganze Schweiz?', en: 'Is there a fishing permit for all of Switzerland?', fr: 'Existe-t-il un permis de pêche pour toute la Suisse ?', it: 'Esiste una patente di pesca per tutta la Svizzera?' },
   aNational: {

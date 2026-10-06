@@ -21,17 +21,21 @@ type Props = {
   types: PermitType[]
   onToggleType: (t: PermitType) => void
   onPick: (id: string) => void
+  freeOnly: boolean
+  noSanaOnly: boolean
+  onFree: (v: boolean) => void
+  onNoSana: (v: boolean) => void
 }
 
 const KIND_RANK = { lake: 0, river: 1, canal: 2, reach: 3, pond: 4 } as const
 const Q_RANK = { official: 0, derived: 1, stub: 2 } as const
 
-export function SidePanel({ lang, waters, hay, cantonInfo, order, query, onQuery, canton, onCanton, types, onToggleType, onPick }: Props) {
+export function SidePanel({ lang, waters, hay, cantonInfo, order, query, onQuery, canton, onCanton, types, onToggleType, onPick, freeOnly, noSanaOnly, onFree, onNoSana }: Props) {
   const [limit, setLimit] = useState(40)
   const terms = useMemo(() => normalize(query.trim()).split(/\s+/).filter(Boolean), [query])
   const results = useMemo(() => {
     return waters
-      .filter((w) => (!canton || w.c === canton) && types.includes(w.p))
+      .filter((w) => (!canton || w.c === canton) && types.includes(w.p) && (!freeOnly || w.fr === 1) && (!noSanaOnly || w.ns === 1))
       .filter((w) => !terms.length || terms.every((tm) => (hay.get(w.id) ?? '').includes(tm)))
       .sort((a, b) => {
         if (terms.length) {
@@ -41,7 +45,7 @@ export function SidePanel({ lang, waters, hay, cantonInfo, order, query, onQuery
         }
         return KIND_RANK[a.k] - KIND_RANK[b.k] || Q_RANK[a.q] - Q_RANK[b.q] || loc(a.n, lang).localeCompare(loc(b.n, lang), lang)
       })
-  }, [waters, hay, terms, canton, types, lang])
+  }, [waters, hay, terms, canton, types, lang, freeOnly, noSanaOnly])
   const cantonHits = useMemo(
     () =>
       terms.length
@@ -68,6 +72,16 @@ export function SidePanel({ lang, waters, hay, cantonInfo, order, query, onQuery
         }}
         aria-label={t('searchPlaceholder', lang)}
       />
+      <div className="start-row" role="group" aria-label={t('startHere', lang)}>
+        {(['ZH', 'BE'] as Canton[]).map((c) => (
+          <button key={c} type="button" aria-pressed={canton === c} onClick={() => onCanton(c)}>
+            {loc(cantonInfo[c].name, lang)}
+          </button>
+        ))}
+        <button type="button" aria-pressed={!canton} onClick={() => onCanton(null)}>
+          {t('allCantonsShort', lang)}
+        </button>
+      </div>
       <div className="canton-row">
         <label className="sr-only" htmlFor="canton-select">
           {t('canton', lang)}
@@ -76,7 +90,7 @@ export function SidePanel({ lang, waters, hay, cantonInfo, order, query, onQuery
           <option value="">{t('allCantons', lang)}</option>
           {order.map((c) => (
             <option key={c} value={c}>
-              {c} – {loc(cantonInfo[c].name, lang)} ({cantonInfo[c].count}) {cantonInfo[c].quality === 'official' ? '✓' : cantonInfo[c].quality === 'stub' ? '?' : '≈'}
+              {c} – {loc(cantonInfo[c].name, lang)} ({cantonInfo[c].count}) {cantonInfo[c].quality === 'official' ? '◉' : cantonInfo[c].quality === 'stub' ? '?' : '≈'}
             </option>
           ))}
         </select>
@@ -109,7 +123,7 @@ export function SidePanel({ lang, waters, hay, cantonInfo, order, query, onQuery
             )}
           </div>
           <div className="muted small">
-            {ci.count} {t('waters', lang)} · ✓{ci.byQuality.official ?? 0} ≈{ci.byQuality.derived ?? 0} ?{ci.byQuality.stub ?? 0}
+            {ci.count} {t('waters', lang)} · ◉{ci.byQuality.official ?? 0} ≈{ci.byQuality.derived ?? 0} ?{ci.byQuality.stub ?? 0}
           </div>
         </div>
       ) : (
@@ -132,7 +146,7 @@ export function SidePanel({ lang, waters, hay, cantonInfo, order, query, onQuery
                 </button>
               ))}
             </div>
-            <a className="small report" href={reportUrl('Petripass: missing/wrong water or canton', t('reportBody', lang))} target="_blank" rel="noopener noreferrer" data-ev="report_missing">
+            <a className="small report" href={reportUrl('Petripass: missing/wrong water or canton', t('reportBody', lang))} data-ev="report_missing">
               ⚑ {t('cantonMissing', lang)}
             </a>
           </details>
@@ -163,6 +177,15 @@ export function SidePanel({ lang, waters, hay, cantonInfo, order, query, onQuery
           </button>
         ))}
       </div>
+      <div className="acc-row" role="group" aria-label={t('fFree', lang)}>
+        <label>
+          <input type="checkbox" checked={freeOnly} onChange={(e) => onFree(e.target.checked)} /> 🎣 {t('fFree', lang)}
+        </label>
+        <label>
+          <input type="checkbox" checked={noSanaOnly} onChange={(e) => onNoSana(e.target.checked)} /> {t('fNoSana', lang)}
+        </label>
+      </div>
+      {(freeOnly || noSanaOnly) && <p className="acc-hint">{t('fHint', lang)}</p>}
       <div className="result-count muted">
         {results.length} {t('results', lang)} · {t('selectHint', lang)}
       </div>
@@ -173,7 +196,7 @@ export function SidePanel({ lang, waters, hay, cantonInfo, order, query, onQuery
               <span className="swatch" style={{ background: PERMIT_COLORS[w.p], opacity: w.q === 'stub' ? 0.5 : 1 }} />
               <span className="result-name">{loc(w.n, lang)}</span>
               <span className="result-meta">
-                {w.c} · {loc(PERMIT_LABELS[w.p], lang)} · <span className={`qdot q-${w.q}`}>{w.q === 'official' ? '✓' : w.q === 'derived' ? '≈' : '?'}</span>
+                {w.c} · {loc(PERMIT_LABELS[w.p], lang)} · <span className={`qdot q-${w.q}`}>{w.q === 'official' ? '◉' : w.q === 'derived' ? '≈' : '?'}</span>
               </span>
             </button>
           </li>

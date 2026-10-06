@@ -11,7 +11,7 @@ const clean = (o: Record<string, string | null | undefined>): Props =>
 /**
  * Vercel Web Analytics (cookieless, no banner needed) + custom events:
  * - landing: on load with ?w= deep link and/or utm_* params
- * - any element with data-ev="buy_click" | "buy_via_petripass_click" | … (props from data-w / data-c / data-t)
+ * - any element with data-ev="buy_click" | "report_error" | "report_missing" (props from data-w / data-c / data-t)
  * Custom events need a Vercel Pro/Enterprise plan to show up in the dashboard; on Hobby they are dropped server-side.
  */
 export function PetripassAnalytics() {

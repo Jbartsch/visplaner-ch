@@ -14,6 +14,8 @@ type Props = {
   selectedCanton: Canton | null
   focus: { bbox: Bbox; seq: number } | null
   overlay: boolean
+  freeOnly: boolean
+  noSanaOnly: boolean
   onSelect: (id: string | null) => void
   onCanton: (c: Canton) => void
   onDetail: (loaded: number) => void
@@ -34,8 +36,11 @@ const DETAIL_ZOOM = 8.6
 const POLY: maplibregl.FilterSpecification = ['match', ['geometry-type'], ['Polygon', 'MultiPolygon'], true, false]
 const LINE: maplibregl.FilterSpecification = ['match', ['geometry-type'], ['LineString', 'MultiLineString'], true, false]
 
-function filt(base: maplibregl.FilterSpecification, cantons: Canton[], types: PermitType[], exclude?: Canton[]): maplibregl.FilterSpecification {
+type Acc = { freeOnly: boolean; noSanaOnly: boolean }
+function filt(base: maplibregl.FilterSpecification, cantons: Canton[], types: PermitType[], exclude?: Canton[], acc?: Acc): maplibregl.FilterSpecification {
   const f: unknown[] = ['all', base, ['in', ['get', 'p'], ['literal', types]]]
+  if (acc?.freeOnly) f.push(['==', ['get', 'fr'], 1])
+  if (acc?.noSanaOnly) f.push(['==', ['get', 'ns'], 1])
   if (cantons.length) f.push(['in', ['get', 'c'], ['literal', cantons]])
   if (exclude?.length) f.push(['!', ['in', ['get', 'c'], ['literal', exclude]]])
   return f as maplibregl.FilterSpecification
@@ -128,7 +133,18 @@ export function MapView(props: Props) {
           paint: { 'line-color': '#0f172a', 'line-width': ['interpolate', ['linear'], ['zoom'], 7, 4, 13, 10], 'line-opacity': 0.75 },
         })
       }
-      loadOverview().then((fc) => (map.getSource('ov') as maplibregl.GeoJSONSource).setData(fc as never))
+      let ovDone = false
+      const loadOv = () =>
+        loadOverview()
+          .then((fc) => {
+            ovDone = true
+            ;(map.getSource('ov') as maplibregl.GeoJSONSource).setData(fc as never)
+          })
+          .catch(() => {})
+      loadOv()
+      map.on('moveend', () => {
+        if (!ovDone) loadOv()
+      })
       apply.current()
       ensure.current()
 
@@ -181,20 +197,22 @@ export function MapView(props: Props) {
             loaded.current.set(c, fc.features)
             rebuildDetail()
           })
+          .catch(() => {}) // retried on next moveend
           .finally(() => pending.current.delete(c))
       }
     }
 
     apply.current = () => {
       if (!map.getLayer('dt-fill')) return
-      const { cantons, types, selectedId, overlay, selectedCanton } = cb.current
+      const { cantons, types, selectedId, overlay, selectedCanton, freeOnly, noSanaOnly } = cb.current
+      const acc = { freeOnly, noSanaOnly }
       const ex = [...loaded.current.keys()]
       for (const src of ['ov', 'dt'] as const) {
         const exc = src === 'ov' ? ex : undefined
-        map.setFilter(`${src}-fill`, filt(POLY, cantons, types, exc))
-        map.setFilter(`${src}-outline`, filt(POLY, cantons, types, exc))
-        map.setFilter(`${src}-line`, filt(LINE, cantons, types, exc))
-        map.setFilter(`${src}-hit`, filt(LINE, cantons, types, exc))
+        map.setFilter(`${src}-fill`, filt(POLY, cantons, types, exc, acc))
+        map.setFilter(`${src}-outline`, filt(POLY, cantons, types, exc, acc))
+        map.setFilter(`${src}-line`, filt(LINE, cantons, types, exc, acc))
+        map.setFilter(`${src}-hit`, filt(LINE, cantons, types, exc, acc))
         map.setFilter(`${src}-hl`, ['==', ['get', 'id'], selectedId ?? '__none__'])
         map.setPaintProperty(`${src}-fill`, 'fill-opacity', overlay ? 0.12 : ['match', ['get', 'q'], 'stub', 0.22, 0.42])
       }
@@ -212,7 +230,7 @@ export function MapView(props: Props) {
   useEffect(() => {
     apply.current()
     ensure.current()
-  }, [props.cantons, props.types, props.selectedId, props.overlay, props.selectedCanton])
+  }, [props.cantons, props.types, props.selectedId, props.overlay, props.selectedCanton, props.freeOnly, props.noSanaOnly])
 
   useEffect(() => {
     const map = mapRef.current

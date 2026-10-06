@@ -38,7 +38,11 @@ export default async function LocaleHome({ params }: { params: Promise<Params> }
       <h1>{p('homeTitle', lang)}</h1>
       <section className="answer">
         <p>{p('homeAnswer', lang)}</p>
-        <p><a className="map-cta" href={`/?lang=${lang}`}>🗺 {p('openMapAll', lang)}</a></p>
+        <p className="start-links">
+          <a className="map-cta" href={`/?canton=ZH&lang=${lang}`}>🗺 Zürich</a>{' '}
+          <a className="map-cta" href={`/?canton=BE&lang=${lang}`}>🗺 Bern</a>{' '}
+          <a className="map-cta secondary" href={`/?lang=${lang}`}>{p('openMapAll', lang)}</a>
+        </p>
       </section>
       <section className="card">
         <table className="ctable">

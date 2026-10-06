@@ -135,13 +135,15 @@ export default async function WaterPage({ params }: { params: Promise<Params> })
         </p>
       </section>
       <section className="card">
-        <WaterFacts w={w} c={c} border={border} lang={lang} />
+        <h2 className="sr-only">{t('permitNeeded', lang)}</h2>
+        <WaterFacts w={w} c={c} border={border} lang={lang} access={CF.meta.access} source={src} />
         {src && (
           <p className="source">
             {t('source', lang)}:{' '}
             <a href={src.url} target="_blank" rel="noopener noreferrer">
               {src.label}
             </a>
+            {src.vintage && <> · {loc(src.vintage, lang)}</>}
           </p>
         )}
       </section>

@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import type { BorderInfo, CantonInfo, Lang, Water } from '@/types/water'
+import { useEffect, useState } from 'react'
+import { loadDetails } from '@/data/loadWaters'
+import type { BorderInfo, CantonInfo, CantonsFile, Lang, SourceDef, Water, WaterExtra } from '@/types/water'
 import { KIND_LABEL, loc } from '@/types/water'
 import { t } from '@/i18n/copy'
 import { QualityBadge } from './Badges'
@@ -11,14 +12,27 @@ type Props = {
   w: Water
   c: CantonInfo
   border: BorderInfo | null
-  source: { label: string; url: string } | undefined
+  source: SourceDef | undefined
+  access: CantonsFile['meta']['access']
   lang: Lang
   onBack: () => void
   onCanton: () => void
 }
 
-export function InfoPanel({ w, c, border, source, lang, onBack, onCanton }: Props) {
+export function InfoPanel({ w: base, c, border, source, access, lang, onBack, onCanton }: Props) {
   const [copied, setCopied] = useState(false)
+  const [extra, setExtra] = useState<{ id: string; x?: WaterExtra } | null>(null)
+  useEffect(() => {
+    let live = true
+    loadDetails(base.c).then(
+      (d) => live && setExtra({ id: base.id, x: d[base.id] }),
+      () => live && setExtra({ id: base.id }),
+    )
+    return () => {
+      live = false
+    }
+  }, [base.id, base.c])
+  const w: Water = extra?.id === base.id && extra.x ? { ...base, x: extra.x } : base
   const share = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href)
@@ -40,7 +54,7 @@ export function InfoPanel({ w, c, border, source, lang, onBack, onCanton }: Prop
       </div>
       <div className="panel-head">
         <div>
-          <h2>{loc(w.n, lang)}</h2>
+          <h2 tabIndex={-1} ref={(el) => el?.focus({ preventScroll: true })}>{loc(w.n, lang)}</h2>
           <div className="meta">
             <button type="button" className="pill pill-btn" onClick={onCanton}>
               {t('canton', lang)} {c.code}
@@ -55,7 +69,7 @@ export function InfoPanel({ w, c, border, source, lang, onBack, onCanton }: Prop
           </div>
         </div>
       </div>
-      <WaterFacts w={w} c={c} border={border} lang={lang} />
+      <WaterFacts w={w} c={c} border={border} lang={lang} access={access} source={source} />
       <p className="source">
         <a href={`/${lang}/gewaesser/${w.slug}`}>{t('detailsPage', lang)} →</a> ·{' '}
         <a href={`/${lang}/kanton/${c.slug}`}>{t('cantonPage', lang)} →</a>
@@ -66,6 +80,7 @@ export function InfoPanel({ w, c, border, source, lang, onBack, onCanton }: Prop
           <a href={source.url} target="_blank" rel="noopener noreferrer">
             {source.label}
           </a>
+          {source.vintage && <span className="vintage"> · {loc(source.vintage, lang)}</span>}
         </p>
       )}
       <p className="disclaimer">{t('disclaimer', lang)}</p>
