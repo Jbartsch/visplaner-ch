@@ -6,9 +6,10 @@ import { InfoPanel } from './InfoPanel'
 import { Legend } from './Legend'
 import { SidePanel } from './SidePanel'
 import { AboutStrip } from './AboutStrip'
-import { buildIndex, loadWaters, type WaterFC } from '@/data/loadWaters'
-import type { Bbox, Canton, Lang, PermitType, WaterEntry } from '@/types/water'
-import { PERMIT_ORDER } from '@/types/water'
+import { loadAppData, type AppData } from '@/data/loadWaters'
+import type { Bbox, Canton, Lang, PermitType } from '@/types/water'
+import { CANTON_CODES, LANGS, PERMIT_ORDER } from '@/types/water'
+import { borderOf, searchText } from '@/lib/water'
 import { t } from '@/i18n/copy'
 
 const MapView = dynamic(() => import('./MapView').then((m) => m.MapView), {
@@ -16,64 +17,83 @@ const MapView = dynamic(() => import('./MapView').then((m) => m.MapView), {
   loading: () => <div className="map map-loading" />,
 })
 
-const LANGS: Lang[] = ['de', 'en', 'fr']
-
-export function VisplanerApp() {
-  const [lang, setLang] = useState<Lang>('de')
-  const [data, setData] = useState<WaterFC | null>(null)
+export function VisplanerApp({ initialLang = 'de' }: { initialLang?: Lang }) {
+  const [lang, setLang] = useState<Lang>(initialLang)
+  const [data, setData] = useState<AppData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [query, setQuery] = useState('')
-  const [cantons, setCantons] = useState<Canton[]>(['ZH', 'BE'])
+  const [canton, setCanton] = useState<Canton | null>(null)
   const [types, setTypes] = useState<PermitType[]>(PERMIT_ORDER)
-  const [overlayBE, setOverlayBE] = useState(false)
+  const [overlay, setOverlay] = useState(false)
   const [focus, setFocus] = useState<{ bbox: Bbox; seq: number } | null>(null)
+  const [detailLoaded, setDetailLoaded] = useState(0)
+  const [sheetOpen, setSheetOpen] = useState(false)
 
   useEffect(() => {
-    loadWaters().then(setData, (e: unknown) => setError(String(e)))
+    loadAppData().then(setData, (e: unknown) => setError(String(e)))
     const params = new URLSearchParams(window.location.search)
     const l = params.get('lang')
     if (l && (LANGS as string[]).includes(l)) setLang(l as Lang)
-    else if (navigator.language.startsWith('fr')) setLang('fr')
-    else if (!navigator.language.startsWith('de')) setLang('en')
+    else if (!l && initialLang === 'de') {
+      const nl = navigator.language.slice(0, 2)
+      if (nl === 'fr' || nl === 'it') setLang(nl)
+      else if (nl !== 'de' && nl !== 'gsw') setLang('en')
+    }
     const w = params.get('w')
     if (w) setSelectedId(w)
-  }, [])
+    const c = params.get('canton')?.toUpperCase()
+    if (c && (CANTON_CODES as readonly string[]).includes(c)) setCanton(c as Canton)
+  }, [initialLang])
 
-  const index = useMemo(() => (data ? buildIndex(data) : new Map<string, WaterEntry>()), [data])
-  const entries = useMemo(() => [...index.values()], [index])
+  const byId = useMemo(() => new Map((data?.waters ?? []).map((w) => [w.id, w])), [data])
+  const hay = useMemo(() => {
+    const m = new Map<string, string>()
+    if (data) for (const w of data.waters) m.set(w.id, searchText(w, data.cantons.cantons[w.c]))
+    return m
+  }, [data])
   const counts = useMemo(() => {
     const c: Partial<Record<PermitType, number>> = {}
-    for (const e of entries) if (cantons.includes(e.props.canton)) c[e.props.permitType] = (c[e.props.permitType] ?? 0) + 1
+    for (const w of data?.waters ?? []) if (!canton || w.c === canton) c[w.p] = (c[w.p] ?? 0) + 1
     return c
-  }, [entries, cantons])
+  }, [data, canton])
 
-  // focus a deep-linked water once data is there
+  // deep link focus once data is there
   useEffect(() => {
-    if (!data || !selectedId) return
-    const e = index.get(selectedId)
-    if (e) setFocus((f) => f ?? { bbox: e.bbox, seq: 0 })
+    if (!data) return
+    if (selectedId) {
+      const w = byId.get(selectedId)
+      if (w) setFocus({ bbox: w.b, seq: 0 })
+    } else if (canton) setFocus({ bbox: data.cantons.cantons[canton].bbox, seq: 0 })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data])
 
-  // keep URL shareable
   useEffect(() => {
     const url = new URL(window.location.href)
-    if (selectedId) url.searchParams.set('w', selectedId)
-    else url.searchParams.delete('w')
-    if (lang !== 'de') url.searchParams.set('lang', lang)
-    else url.searchParams.delete('lang')
+    const set = (k: string, v: string | null) => (v ? url.searchParams.set(k, v) : url.searchParams.delete(k))
+    set('w', selectedId)
+    set('canton', canton)
+    set('lang', lang !== 'de' ? lang : null)
     window.history.replaceState(null, '', url)
     document.documentElement.lang = lang
-  }, [selectedId, lang])
+  }, [selectedId, canton, lang])
 
   const pick = useCallback(
     (id: string) => {
       setSelectedId(id)
-      const e = index.get(id)
-      if (e) setFocus((f) => ({ bbox: e.bbox, seq: (f?.seq ?? 0) + 1 }))
+      setSheetOpen(true)
+      const w = byId.get(id)
+      if (w) setFocus((f) => ({ bbox: w.b, seq: (f?.seq ?? 0) + 1 }))
     },
-    [index],
+    [byId],
+  )
+  const chooseCanton = useCallback(
+    (c: Canton | null) => {
+      setCanton(c)
+      setSelectedId(null)
+      if (c && data) setFocus((f) => ({ bbox: data.cantons.cantons[c].bbox, seq: (f?.seq ?? 0) + 1 }))
+    },
+    [data],
   )
   const toggleType = useCallback((p: PermitType) => {
     setTypes((cur) => {
@@ -82,14 +102,14 @@ export function VisplanerApp() {
     })
   }, [])
 
-  const selected = selectedId ? index.get(selectedId)?.props ?? null : null
+  const selected = selectedId ? byId.get(selectedId) ?? null : null
+  const cantonFilter = useMemo(() => (canton ? [canton] : []), [canton])
 
   return (
     <div className="app">
       <div className="mock-banner" role="note">
         {t('banner', lang)}
       </div>
-
       <header className="topbar">
         <div className="brand">
           <strong>
@@ -99,51 +119,73 @@ export function VisplanerApp() {
         </div>
         <div className="lang-toggle" role="group" aria-label="Language">
           {LANGS.map((l) => (
-            <button key={l} type="button" className={lang === l ? 'active' : ''} onClick={() => setLang(l)}>
+            <button key={l} type="button" className={lang === l ? 'active' : ''} onClick={() => setLang(l)} aria-pressed={lang === l}>
               {l.toUpperCase()}
             </button>
           ))}
         </div>
       </header>
-
       <AboutStrip lang={lang} />
-
       <main className="main">
         <div className="map-wrap">
           {data ? (
             <MapView
-              data={data}
-              cantons={cantons}
+              cantonInfo={data.cantons.cantons}
+              cantons={cantonFilter}
               types={types}
               selectedId={selectedId}
+              selectedCanton={selected?.c ?? canton}
               focus={focus}
-              overlayBE={overlayBE}
-              onSelect={(id) => (id ? setSelectedId(id) : setSelectedId(null))}
+              overlay={overlay}
+              onSelect={(id) => (id ? pick(id) : setSelectedId(null))}
+              onCanton={(c) => chooseCanton(c)}
+              onDetail={setDetailLoaded}
             />
           ) : (
             <div className="map map-loading">{error ?? t('loading', lang)}</div>
           )}
-          <Legend lang={lang} types={types} counts={counts} onToggle={toggleType} overlayBE={overlayBE} onOverlay={setOverlayBE} />
+          <Legend lang={lang} types={types} counts={counts} onToggle={toggleType} overlay={overlay} onOverlay={setOverlay} showZoomHint={detailLoaded === 0} />
         </div>
-        <aside className="panel">
-          {selected ? (
-            <InfoPanel water={selected} lang={lang} onBack={() => setSelectedId(null)} />
-          ) : (
+        <aside className={sheetOpen || selected ? 'panel open' : 'panel'}>
+          <button type="button" className="sheet-handle" onClick={() => setSheetOpen((o) => !o)} aria-label="toggle panel">
+            <span />
+          </button>
+          {data && selected ? (
+            <InfoPanel
+              w={selected}
+              c={data.cantons.cantons[selected.c]}
+              border={borderOf(selected, data.border)}
+              source={data.cantons.meta.sources[selected.s]}
+              lang={lang}
+              onBack={() => setSelectedId(null)}
+              onCanton={() => chooseCanton(selected.c)}
+            />
+          ) : data ? (
             <SidePanel
               lang={lang}
-              entries={entries}
+              waters={data.waters}
+              hay={hay}
+              cantonInfo={data.cantons.cantons}
+              order={data.cantons.order}
               query={query}
-              onQuery={setQuery}
-              cantons={cantons}
-              onCantons={setCantons}
+              onQuery={(q) => {
+                setQuery(q)
+                setSheetOpen(true)
+              }}
+              canton={canton}
+              onCanton={chooseCanton}
               types={types}
               onToggleType={toggleType}
               onPick={pick}
             />
+          ) : (
+            <p className="muted">{error ?? t('loading', lang)}</p>
           )}
         </aside>
       </main>
-      <footer className="footer">{t('footerData', lang)}</footer>
+      <footer className="footer">
+        {t('footerData', lang)} · <a href={`/${lang}`}>{t('allCantons', lang)} (FAQ)</a>
+      </footer>
     </div>
   )
 }
