@@ -21,13 +21,22 @@ python3 scripts/fetch_vec25.py     # VECTOR25 river network for cantons without 
 | `src/data/generated/cantons.json` | canton meta: system, links, rules, sources, coverage, quality (SSR and client) |
 | `src/data/generated/waters.json` | full water index: id, slug, names, canton, kind, permit, quality, bbox, extras (SSR pages) |
 | `src/data/generated/border.json` | border/intercantonal waters: authority, permit hint |
-| `public/data/waters-index.json`, `cantons.json`, `border.json` | client copies |
+| `public/data/waters-index.json` | slim client index: id, n, c, k, p, q, r, s, b (4 dp), `fr` (1 = sourced Freiangel right), `ns` (1 = possible without SaNa, 0 = SaNa required, absent = unknown), `bd` (border key). 619 KB / 104 KB gzip |
+| `public/data/details/XX.json` | per-canton extras (revier, links, notes, day ticket, `free`, `ss`), loaded when a water panel opens |
+| `public/data/cantons.json`, `border.json` | client copies. `meta.access` = Freiangel and short-term-SaNa definitions (rule text, official URL, check date). `meta.sources[*].vintage` = data vintage |
 | `public/data/overview.geojson` (~400 KB) | big lakes and long rivers, loaded first |
 | `public/data/cantons/XX.geojson` | per-canton detail geometry, lazy-loaded at zoom ≥ 8.6 or when a canton is selected |
 | `public/data/cantons-shape.geojson` | canton polygons for the coverage choropleth |
 | `docs/COVERAGE.md` | coverage matrix |
 
 Geometry is simplified (12 m lines / 8 m polygons for detail; 120–350 m for the overview) and rounded to 5 decimals.
+
+## Access flags (Freiangeln / SaNa)
+`scripts/lib/access_cfg.py` holds hand-curated, sourced rules:
+- `FREE`: canton plus water-slug regex → Freiangel rule, official URL, SaNa requirement and season.
+- `SANA_SHORT`: canton-level statement that short-term permits need no SaNa (or that SaNa is always required), with URL.
+
+Only waters matched by a sourced rule get `fr`/`ns`; everything else stays unknown. `CHECKED` is the verification date. The build fails its sanity gates if the counts collapse (override with `--force`).
 
 ## Quality tiers (per water `q`, per canton `quality`)
 - **official**: the permit regime for this water comes from an official cantonal geodataset (ZH, BE, SO, VS, plus TG Fischenzen/Verbote and the SH Pacht revier).

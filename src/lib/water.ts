@@ -25,16 +25,18 @@ export function waterLinks(w: Water, c: CantonInfo): { primary: CantonLink[]; se
   let primary: CantonLink[]
   if (w.p === 'closed') primary = []
   else if (w.p === 'pacht' || w.p === 'private' || w.p === 'unknown') {
-    primary = rel.filter((l) => l.kind === 'pacht' || l.kind === 'enquire')
+    // A water-specific lessee sheet (e.g. BE "Pachtblatt mit Pächter") beats the canton-wide directory.
+    const sheet = w.p === 'pacht' || w.p === 'private' ? own.filter((l) => /Pächter|Pachtblatt|Pachtvereinigung/i.test(l.label.de ?? '')).map((l) => ({ ...l, kind: 'pacht' as const })) : []
+    primary = [...sheet, ...rel.filter((l) => l.kind === 'pacht' || l.kind === 'enquire')]
     if (!primary.length) primary = rel.filter((l) => l.kind === 'info').slice(0, 1)
   } else primary = rel.filter((l) => l.kind === 'buy' || l.kind === 'app')
-  const secondary = [...own, ...rel.filter((l) => !primary.includes(l))]
+  const secondary = [...own.filter((l) => !primary.some((p) => p.url === l.url)), ...rel.filter((l) => !primary.includes(l))]
   if (!primary.length && !secondary.length) secondary.push(...c.links.filter((l) => l.kind === 'info'))
   return { primary, secondary }
 }
 
 export function borderOf(w: Water, border: Record<string, BorderInfo>): BorderInfo | null {
-  const k = w.x?.border
+  const k = w.x?.border ?? w.bd
   if (!k || k === 'multi') return null
   return border[k] ?? null
 }
@@ -58,9 +60,10 @@ export function linkTarget(a: { kind: string; url: string }): string {
   return a.kind || 'info'
 }
 
-/** "Report an error" link: mailto if NEXT_PUBLIC_FEEDBACK_EMAIL is set, else a prefilled GitHub issue. */
+/** Feedback address: NEXT_PUBLIC_FEEDBACK_EMAIL (set in Vercel) or the project owner's fallback, so the link never dead-ends. */
+export const FEEDBACK_EMAIL = process.env.NEXT_PUBLIC_FEEDBACK_EMAIL || 'jonas@innoveto.ch'
+
+/** "Report an error" mailto link. */
 export function reportUrl(subject: string, body: string): string {
-  const mail = process.env.NEXT_PUBLIC_FEEDBACK_EMAIL
-  if (mail) return `mailto:${mail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
-  return `https://github.com/Jbartsch/visplaner-ch/issues/new?title=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}&labels=data`
+  return `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
 }

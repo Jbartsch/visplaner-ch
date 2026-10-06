@@ -54,7 +54,15 @@ export type WaterExtra = {
   conditions?: Localized
   notes?: Localized
   links?: { kind: LinkKind; label: Localized; url: string }[]
+  /** key into meta.access.free (sourced free-angling right) */
+  free?: string
+  /** canton code into meta.access.sanaShort (sourced short-term-permit SaNa rule) */
+  ss?: string
 }
+
+export type FreeDef = { rule: Localized; url: string; label: string; sana: 'not-required' | 'required' | 'unknown'; season: string | null }
+export type SanaShortDef = { v: 'yes' | 'no'; url: string; label: string; note: Localized }
+export type SourceDef = { label: string; url: string; vintage?: Localized }
 
 /** Compact water entry (public/data/waters-index.json, src/data/generated/waters.json) */
 export type Water = {
@@ -69,10 +77,20 @@ export type Water = {
   s: string
   b: Bbox
   x?: WaterExtra
+  /** 1 = sourced free-angling right */
+  fr?: 1
+  /** 1 = possible without SaNa (sourced), 0 = SaNa required (sourced), absent = unknown */
+  ns?: 0 | 1
+  /** border key (client index only; full data has x.border) */
+  bd?: string
 }
 
 export type CantonsFile = {
-  meta: { generated: string; sources: Record<string, { label: string; url: string }> }
+  meta: {
+    generated: string
+    sources: Record<string, SourceDef>
+    access: { free: Record<string, FreeDef>; sanaShort: Record<string, SanaShortDef>; checked: string }
+  }
   order: Canton[]
   cantons: Record<Canton, CantonInfo>
 }
@@ -103,7 +121,7 @@ export const PERMIT_LABELS: Record<PermitType, Localized> = {
 
 export const PERMIT_WHERE: Record<PermitType, Localized> = {
   patent: { de: 'Kaufen beim Kanton (Webshop / App)', en: 'Buy from the canton (web shop / app)', fr: 'Acheter auprès du canton', it: 'Acquistare dal Cantone' },
-  pacht: { de: 'Karte beim Pächter / Verein', en: 'Card from the lessee / club', fr: 'Carte auprès du fermier / club', it: 'Tessera dall\'affittuario / società' },
+  pacht: { de: 'Karte beim Pächter / Verein', en: 'Card from the lessee / club', fr: 'Carte auprès du détenteur du lot / de la société', it: 'Tessera dall\'affittuario / società' },
   freiangel: { de: 'Kein Patent nötig (Regeln gelten)', en: 'No permit needed (rules apply)', fr: 'Pas de permis (règles applicables)', it: 'Nessuna patente (regole applicabili)' },
   mixed: { de: 'Je nach Abschnitt / Kanton', en: 'Depends on section / canton', fr: 'Selon le secteur / canton', it: 'Secondo il tratto / Cantone' },
   private: { de: 'Erlaubnis der Berechtigten', en: 'Permission from right holders', fr: 'Autorisation des ayants droit', it: 'Permesso dei titolari' },
@@ -119,9 +137,9 @@ export const QUALITY_LABELS: Record<Quality, Localized> = {
 
 /** Provenance label with the canton code, e.g. "Quelle: Kanton ZH (OGD)". Describes where the data comes from, not an official status. */
 export const QUALITY_LABELS_C: Record<Quality, Localized> = {
-  official: { de: 'Quelle: Kanton {c} (OGD)', en: 'Source: Canton {c} (open data)', fr: 'Source : canton {c} (données ouvertes)', it: 'Fonte: Cantone {c} (open data)' },
-  derived: { de: 'Abgeleitet aus Regeln Kanton {c}', en: 'Derived from canton {c} rules', fr: 'Déduit des règles du canton {c}', it: 'Dedotto dalle regole del Cantone {c}' },
-  stub: { de: 'Unvollständig – Kanton {c} fragen', en: 'Incomplete – check with canton {c}', fr: 'Incomplet – vérifier auprès du canton {c}', it: 'Incompleto – verificare con il Cantone {c}' },
+  official: { de: 'Bewilligungstyp: Quelle Kanton {c} (OGD)', en: 'Permit type: source canton {c} (open data)', fr: 'Type de permis : source canton {c} (données ouvertes)', it: 'Tipo di patente: fonte Cantone {c} (open data)' },
+  derived: { de: 'Bewilligungstyp abgeleitet (Regeln Kanton {c})', en: 'Permit type derived (canton {c} rules)', fr: 'Type de permis déduit (règles du canton {c})', it: 'Tipo di patente dedotto (regole Cantone {c})' },
+  stub: { de: 'Bewilligungstyp unvollständig (Kanton {c} fragen)', en: 'Permit type incomplete (check with canton {c})', fr: 'Type de permis incomplet (vérifier auprès du canton {c})', it: 'Tipo di patente incompleto (verificare con il Cantone {c})' },
 }
 export const qualityLabel = (q: Quality, lang: Lang, canton?: string) =>
   canton ? loc(QUALITY_LABELS_C[q], lang).replace('{c}', canton) : loc(QUALITY_LABELS[q], lang)

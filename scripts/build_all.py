@@ -27,6 +27,7 @@ from shapely.ops import linemerge as _lm, unary_union
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / 'lib'))
 from cantons_cfg import CANTONS, ORDER, BORDER, RIVER_BORDER, T  # noqa: E402
+from access_cfg import FREE, SANA_SHORT, CHECKED as ACCESS_CHECKED  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 RAW = ROOT / 'data-raw'
@@ -102,7 +103,7 @@ def add_water(canton, name, kind, rule, q, geom, src, ptype=None, x=None, idhint
     wid = slug
     n = {'de': name}
     if names:
-        n.update({k: v for k, v in names.items() if v and v != name})
+        n.update({k: re.sub(r'^La de ', 'Lac de ', v) for k, v in names.items() if v and v != name})
     e = {'id': wid, 'slug': slug, 'n': n, 'c': canton, 'k': kind, 'p': p, 'q': q, 'r': rule, 's': src}
     if x:
         e['x'] = {k: v for k, v in x.items() if v}
@@ -118,11 +119,13 @@ def L1(de, fr=None):
 
 # ---------------------------------------------------------------- ZH (official)
 SRC = {}
-def src(key, label, url):
-    SRC[key] = {'label': label, 'url': url}
+FETCHED = {'de': 'abgerufen {d}', 'en': 'retrieved {d}', 'fr': 'récupéré le {d}', 'it': 'scaricato il {d}'}
+def src(key, label, url, vintage=None):
+    SRC[key] = {'label': label, 'url': url, 'vintage': vintage}
     return key
 
-S_ZH = src('zh', 'Kanton Zürich OGD · Fischereireviere', CANTONS['ZH']['sources'][0]['url'])
+S_ZH = src('zh', 'Kanton Zürich OGD · Fischereireviere', CANTONS['ZH']['sources'][0]['url'],
+           {'de': 'Datenstand 2010', 'en': 'data as of 2010', 'fr': 'données de 2010', 'it': 'dati del 2010'})
 still = gpd.read_file(RAW / 'zh_stillgewaesser_f.geojson').to_crs(LV95)
 net = gpd.read_file(RAW / 'zh_gewaessernetz_l.geojson').to_crs(LV95)
 ZH_LAKES = {1: ('Zürichsee', 'zuerichsee'), 2: ('Greifensee', None), 3: ('Pfäffikersee', None)}
@@ -177,22 +180,22 @@ if be_ok:
         border = BORDER.get('Bieler See')['key'] if 'Biel' in nm else None
         add_water('BE', nm, 'lake', 'patent', 'official', r.geometry, S_BE, names={'fr': nf},
                   x={'border': border, 'notes': L1(r['patstypt_typ_de'], r['patstypt_typ_fr']),
-                     'links': pdfl('Patentgewässer-Blatt (PDF)', 'Patent water sheet (PDF)', 'Fiche eaux à permis (PDF)', 'Scheda (PDF)', sv(r['url_de']))})
+                     'links': pdfl('Patentgewässer-Blatt (PDF)', 'Permit water details (PDF)', 'Fiche eaux à permis (PDF)', 'Scheda acque a patente (PDF)', sv(r['url_de']))})
     for _, r in rp('patflgew').iterrows():
         nm, nf = r['patflnt_name_de'], r['patflnt_name_fr']
         d = sv(r['patflbt_beschr_de'])
         add_water('BE', nm, 'river', 'patent', 'official', lm(r.geometry), S_BE, names={'fr': nf},
                   x={'notes': L1(d, sv(r['patflbt_beschr_fr'])) if d and d != '-' else None,
-                     'links': pdfl('Patentstrecke-Blatt (PDF)', 'Patent reach sheet (PDF)', 'Fiche du tronçon (PDF)', 'Scheda (PDF)', sv(r['url_de']))})
+                     'links': pdfl('Patentstrecke-Blatt (PDF)', 'Permit area details (PDF)', 'Fiche du tronçon (PDF)', 'Scheda tratto (PDF)', sv(r['url_de']))})
     for lay, kind in [('pachtflg', 'river'), ('pachtstg', 'pond')]:
         for _, r in rp(lay).iterrows():
             add_water('BE', f"{r['pacht_name']} (Pacht {r['pacht_code']})", kind, 'pacht', 'official', lm(r.geometry) if kind == 'river' else r.geometry, S_BE,
-                      x={'revier': str(r['pacht_code']), 'links': pdfl('Pachtblatt mit Pächter (PDF)', 'Lease sheet with lessee (PDF)', 'Fiche du lot affermé (PDF)', 'Scheda affitto (PDF)', sv(r['url']))})
+                      x={'revier': str(r['pacht_code']), 'links': pdfl('Pachtblatt mit Pächter (PDF)', 'Lessee details for this stretch (PDF)', 'Fiche du lot avec détenteur du droit de pêche (PDF)', 'Scheda affitto con affittuario (PDF)', sv(r['url']))})
     for _, r in rp('schongeb').iterrows():
         d = sv(r['schonbt_beschr_de'])
         add_water('BE', f"Schongebiet {r['schonnt_name_de']}", 'reach', 'closed', 'official', r.geometry, S_BE, names={'fr': f"Zone protégée {r['schonnt_name_fr']}"},
                   x={'notes': L1(d, sv(r['schonbt_beschr_fr'])) if d else None,
-                     'links': pdfl('Schongebiet-Blatt (PDF)', 'Protected area sheet (PDF)', 'Fiche zone protégée (PDF)', 'Scheda (PDF)', sv(r['url']))})
+                     'links': pdfl('Schongebiet-Blatt (PDF)', 'Protected area details (PDF)', 'Fiche zone protégée (PDF)', 'Scheda zona protetta (PDF)', sv(r['url']))})
 else:
     print('WARN: BE official data missing – BE falls back to generic derived layer')
 
@@ -392,6 +395,41 @@ def simp(g, kind, tol_line, tol_poly):
         return g.simplify(tol_poly, preserve_topology=True)
     return g.simplify(tol_line)
 
+# ---------------------------------------------------------------- access flags (sourced only)
+PROPS = {wid: pr for cc in GEOMS for wid, _, pr in GEOMS[cc]}
+ACCESS = Counter()
+for w in WATERS:
+    pr = PROPS.get(w['id'], {})
+    x = w.setdefault('x', {})
+    fi = None
+    for i, f in enumerate(FREE):
+        if any(w['c'] == c and re.match(rx, w['slug']) for c, rx in f['match']):
+            fi = i
+            break
+    if fi is None and w['p'] == 'freiangel' and w['c'] == 'TG':
+        fi = next(i for i, f in enumerate(FREE) if ('TG', r'^(bodensee|untersee)') in f['match'])
+    if fi is not None:
+        x['free'] = f'f{fi}'
+    ss = SANA_SHORT.get(w['c'])
+    if ss and w['p'] in ('patent', 'mixed') and (not ss['only'] or re.match(ss['only'], w['slug'])):
+        x['ss'] = w['c']
+    fr = fi is not None
+    fsana = FREE[fi]['sana'] if fr else None
+    ns = None
+    if fsana == 'not-required':
+        ns = 1
+    elif 'ss' in x:
+        ns = 1 if ss['v'] == 'yes' else 0
+    elif fsana == 'required':
+        ns = 0
+    if fr:
+        w['fr'] = 1; pr['fr'] = 1; ACCESS['free'] += 1
+    if ns is not None:
+        w['ns'] = ns; pr['ns'] = ns; ACCESS[f'ns{ns}'] += 1
+    if not x:
+        del w['x']
+print('access', dict(ACCESS))
+
 BBOX = {}
 overview = []
 sizes = {}
@@ -465,13 +503,45 @@ cs = gpd.GeoSeries([KANT[c].simplify(250, preserve_topology=True) for c in ORDER
     {'type': 'Feature', 'properties': {'c': c, 'q': cantons_out[c]['quality']}, 'geometry': {'type': mapping(cs[c])['type'], 'coordinates': rnd(mapping(cs[c])['coordinates'], 4)}}
     for c in ORDER]}, separators=(',', ':')))
 border_out = {v['key']: v for k, v in BORDER.items()}
-meta = {'generated': ASOF, 'sources': SRC}
+for k, v in SRC.items():
+    if not v.get('vintage'):
+        v['vintage'] = {l: t.format(d=ASOF) for l, t in FETCHED.items()}
+ACCESS_DEFS = {'free': {f'f{i}': {'rule': f['rule'], 'url': f['url'], 'label': f['label'], 'sana': f['sana'], 'season': f['season']} for i, f in enumerate(FREE)},
+               'sanaShort': {c: {'v': v['v'], 'url': v['url'], 'label': v['label'], 'note': v['note']} for c, v in SANA_SHORT.items()},
+               'checked': ACCESS_CHECKED}
+meta = {'generated': ASOF, 'sources': SRC, 'access': ACCESS_DEFS}
 (GEN / 'cantons.json').write_text(json.dumps({'meta': meta, 'order': ORDER, 'cantons': cantons_out}, ensure_ascii=False, separators=(',', ':')))
 (GEN / 'border.json').write_text(json.dumps(border_out, ensure_ascii=False, separators=(',', ':')))
 for fn in ('cantons.json', 'border.json'):
     (PUB / fn).write_text((GEN / fn).read_text())
 (GEN / 'waters.json').write_text(json.dumps(WATERS, ensure_ascii=False, separators=(',', ':')))
-(PUB / 'waters-index.json').write_text(json.dumps({'meta': meta, 'waters': WATERS}, ensure_ascii=False, separators=(',', ':')))
+# client index: slim (no extras; id == slug; 4-dp bbox); extras lazy-loaded per canton from /data/details/XX.json
+def slim(w):
+    e = {k: w[k] for k in ('id', 'n', 'c', 'k', 'p', 'q', 'r', 's') if k in w}
+    e['b'] = [round(v, 4) for v in w['b']]
+    for k in ('fr', 'ns'):
+        if k in w:
+            e[k] = w[k]
+    bd = (w.get('x') or {}).get('border')
+    if bd:
+        e['bd'] = bd
+    return e
+(PUB / 'waters-index.json').write_text(json.dumps({'waters': [slim(w) for w in WATERS]}, ensure_ascii=False, separators=(',', ':')))
+(PUB / 'details').mkdir(exist_ok=True)
+for cc in ORDER:
+    d = {w['id']: w['x'] for w in WATERS if w['c'] == cc and w.get('x')}
+    (PUB / 'details' / f'{cc}.json').write_text(json.dumps(d, ensure_ascii=False, separators=(',', ':')))
+
+# sanity gates against silent partial rebuilds
+fails = []
+if len(WATERS) < 3500: fails.append(f'total {len(WATERS)} < 3500')
+for cc in ORDER:
+    if cantons_out[cc]['count'] < 5: fails.append(f'{cc} count < 5')
+for cc in ('ZH', 'SO', 'VS', 'BE'):
+    if cantons_out[cc]['quality'] != 'official': fails.append(f'{cc} not official')
+if cantons_out['BE']['byQuality'].get('official', 0) < 450: fails.append('BE official < 450')
+if fails and '--force' not in sys.argv:
+    sys.exit('SANITY FAIL: ' + '; '.join(fails))
 old = PUB / 'waters.geojson'
 if old.exists():
     old.unlink()

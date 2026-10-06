@@ -108,7 +108,7 @@ export default async function CantonPage({ params }: { params: Promise<Params> }
         <h2>{p('coverageTitle', lang)}</h2>
         <table className="ctable">
           <tbody>
-            <tr><th>{t('quality', lang)}</th><td><QualityBadge q={c.quality} lang={lang} canton={c.code} /> · ✓ {c.byQuality.official ?? 0} · ≈ {c.byQuality.derived ?? 0} · ? {c.byQuality.stub ?? 0} ({c.count} {t('waters', lang)})</td></tr>
+            <tr><th>{t('quality', lang)}</th><td><QualityBadge q={c.quality} lang={lang} canton={c.code} /> · ◉ {c.byQuality.official ?? 0} · ≈ {c.byQuality.derived ?? 0} · ? {c.byQuality.stub ?? 0} ({c.count} {t('waters', lang)})</td></tr>
             <tr><th>{t('legendTitle', lang)}</th><td>{PERMIT_ORDER.filter((k) => c.byPermit[k]).map((k) => (
               <span key={k} style={{ marginRight: '0.6rem', whiteSpace: 'nowrap' }}><span className="swatch" style={{ background: PERMIT_COLORS[k] }} /> {loc(PERMIT_LABELS[k], lang)} {c.byPermit[k]}</span>
             ))}</td></tr>

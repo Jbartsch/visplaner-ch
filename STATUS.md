@@ -1,6 +1,6 @@
 # STATUS.md — Petripass (repo visplaner-ch)
 
-**Updated:** 2026-10-06 ~07:50 Europe/Zurich
+**Updated:** 2026-10-06 Europe/Zurich
 
 ## Live URLs
 | | URL |
@@ -13,18 +13,46 @@
 ## Repo URL
 https://github.com/Jbartsch/visplaner-ch
 
+## v0.4 — Friend soft-launch gate (2026-10-06)
+Scope from the Astra design review (`/workspace/petripass-design-review/gpt-6-astra-review.md`) plus the earlier soft-launch review.
+- **Freiangeln + no-SaNa filters** (`?free=1`, `?nosana=1`). They use sourced flags only (`scripts/lib/access_cfg.py`, each with its official URL and check date). Waters without a source stay unknown and are not counted as "no".
+- **Removed the "Buy via Petripass" checkout stub everywhere.** It is replaced by an independence note next to the buy section: "Petripass ist unabhängig, kein Angebot des Kantons, und verkauft keine Patente". `docs/MONETIZATION.md` is kept.
+- **Panel order:** permit card → border water → Freiangel rule → SaNa (sourced note, or "nicht verifiziert") → day ticket (with source and data vintage) → buy.
+  - Pacht CTA is "Pächter finden: …". It prefers the water's own BE Pachtblatt, else the ZH Revierverzeichnis plus the tip "Im PDF nach Revier N suchen".
+- **Badge** shows permit-type provenance only ("Bewilligungstyp: Quelle Kanton ZH (OGD)" / "abgeleitet" / "unvollständig"). No "amtlich"/"official" copy anywhere.
+- **Data vintage** is shown per source (ZH dataset "Datenstand 2010").
+- **Unverified links** show "(Link nicht geprüft)" instead of an asterisk.
+- **Start shortcuts** Zürich / Bern / Alle Kantone in the panel and on the landing page.
+- **Deep links:** `/zh`, `/be`, … (every canton except FR, which clashes with the locale), `/karte/<code>`, `/?canton=ZH`, `/?w=<id>`.
+- **Mobile:** header 96 → 68 px, short BETA line, no horizontal overflow on `/de` (compact table rows).
+- **a11y:** single H1 (brand on the map page), banner inside `<header>`/`<aside>`, map region label, border-box heading contrast. axe (WCAG 2 A/AA + best practice): 0 violations on the map panels.
+- **WMS proxy:** passes only `image/*` with 200; XML ServiceExceptions → 502 `no-store`; tile-aligned Swiss bbox only; no error leak; no ACAO `*`.
+- **Payload:** the slim `waters-index.json` is 619 KB (104 KB gzip), down from 1.07 MB. Per-canton `details/XX.json` loads on demand. Failed fetches are retried.
+- **Feedback:** mailto `NEXT_PUBLIC_FEEDBACK_EMAIL`, fallback `jonas@innoveto.ch`.
+- **Mobile smoke test:** `research/screens/` (Playwright, Chrome with iPhone 14 / Pixel 7 emulation; not real Safari).
+
+### Deferred until after soft launch
+Winter/ice, species by season, rules summary/chat. No WIP code exists for these yet.
+
+### Open issues
+- IT copy is machine-drafted. BE reach notes come from the dataset in German only.
+- ZH permit dataset is from 2010 (shown on panels).
+- Links not confirmed: UR web shop (HTTP 500/timeout), fischerei.ai.ch (403). The SZ web shop is desktop-only (labelled).
+- The no-SaNa flag is applied per canton where the canton's own page states that short-term permits need no SaNa (ZH, BE, LU, GR, VS; UR only for the Göscheneralp, Urnersee and Seelisbergersee). Pacht waters are never flagged.
+- Vercel Web Analytics must be enabled in the dashboard. Custom events need Pro. The MCP token cannot see the project, so env vars must be set by Jonas.
+
 ## v0.3 — Petripass, all 26 cantons + landing pages (2026-10-06)
 - **Brand:** working name **Petripass** (UI title/meta/OG, schema.org, docs). Tagline (locked): *Find your water. Understand the rules. Get the right permit.* with DE/FR/IT translations.
   Positioning: the decision layer before you buy. Purchase links go to the official seller (cantonal eFJ shop/app, lessee). Independent service, not an authority (shown in the disclaimer).
 - **Coverage:** 3,644 waters in all 26 cantons. Canton tiers: official 4 (ZH, BE, SO, VS) · derived 21 · stub 1 (SH). Details in `docs/COVERAGE.md`.
-- **UI:** canton filter (26), coverage choropleth and grid, quality badge per water, border-water authority, lazy per-canton geometry, IT locale, mobile bottom sheet, "Buy via Petripass" stub (coming soon, localStorage only).
+- **UI:** canton filter (26), coverage choropleth and grid, quality badge per water, border-water authority, lazy per-canton geometry, IT locale, mobile bottom sheet. (The "Buy via Petripass" stub was removed in v0.4.)
 - **Pages:** `/{de,fr,it,en}`, `/{locale}/kanton/{slug}` (104), `/{locale}/gewaesser/{slug}` (lakes prerendered, the rest ISR). Each has an answer block, FAQ, JSON-LD (FAQPage, BodyOfWater/Place, BreadcrumbList) and hreflang. `sitemap.xml` (~14.7k URLs) and `robots.txt`.
 - Docs: `docs/DATA.md`, `docs/COVERAGE.md`, `docs/MONETIZATION.md`, `research/competitors.md`.
 
 ### Follow-ups
 - **IT copy is machine-drafted. It needs review** (`src/i18n/copy.ts`, `src/i18n/pages.ts`, `scripts/lib/cantons_cfg.py`).
 - Deeper rename (repo, Vercel project, domain `petripass.ch`?, `VisplanerApp` component, localStorage keys `vp-*`) is deliberately not done.
-- Next PRs: Freiangeln / no-SaNa filters (sourced flags only), winter/ice mode, species-by-season, rules summary and grounded rules chat.
+- Next PRs (after soft launch): winter/ice mode, species-by-season, rules summary and grounded rules chat.
 - Hejfish seller links per water (where Hejfish is the official seller): to research and source.
 - Sitemap is ~9 MB; split with `generateSitemaps` if Search Console complains.
 

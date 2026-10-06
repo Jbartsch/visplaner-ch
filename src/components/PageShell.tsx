@@ -23,9 +23,9 @@ export function PageShell({ lang, path, children }: { lang: Lang; path: string; 
           ))}
         </nav>
       </header>
-      <div className="mock-banner" role="note">
+      <aside className="mock-banner" aria-label="Beta">
         {t('banner', lang)}
-      </div>
+      </aside>
       <main className="page-main">
         {children}
         <p className="disclaimer">{t('disclaimer', lang)}</p>

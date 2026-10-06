@@ -29,12 +29,21 @@ export function VisplanerApp({ initialLang = 'de' }: { initialLang?: Lang }) {
   const [focus, setFocus] = useState<{ bbox: Bbox; seq: number } | null>(null)
   const [detailLoaded, setDetailLoaded] = useState(0)
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [freeOnly, setFreeOnly] = useState(false)
+  const [noSanaOnly, setNoSanaOnly] = useState(false)
 
   useEffect(() => {
     loadAppData().then(setData, (e: unknown) => setError(String(e)))
     const params = new URLSearchParams(window.location.search)
     const l = params.get('lang')
+    let saved: string | null = null
+    try {
+      saved = localStorage.getItem('pp-lang')
+    } catch {
+      /* ignore */
+    }
     if (l && (LANGS as string[]).includes(l)) setLang(l as Lang)
+    else if (saved && (LANGS as string[]).includes(saved)) setLang(saved as Lang)
     else if (!l && initialLang === 'de') {
       const nl = navigator.language.slice(0, 2)
       if (nl === 'fr' || nl === 'it') setLang(nl)
@@ -44,6 +53,8 @@ export function VisplanerApp({ initialLang = 'de' }: { initialLang?: Lang }) {
     if (w) setSelectedId(w)
     const c = params.get('canton')?.toUpperCase()
     if (c && (CANTON_CODES as readonly string[]).includes(c)) setCanton(c as Canton)
+    if (params.get('free') === '1') setFreeOnly(true)
+    if (params.get('nosana') === '1') setNoSanaOnly(true)
   }, [initialLang])
 
   const byId = useMemo(() => new Map((data?.waters ?? []).map((w) => [w.id, w])), [data])
@@ -54,9 +65,10 @@ export function VisplanerApp({ initialLang = 'de' }: { initialLang?: Lang }) {
   }, [data])
   const counts = useMemo(() => {
     const c: Partial<Record<PermitType, number>> = {}
-    for (const w of data?.waters ?? []) if (!canton || w.c === canton) c[w.p] = (c[w.p] ?? 0) + 1
+    for (const w of data?.waters ?? [])
+      if ((!canton || w.c === canton) && (!freeOnly || w.fr === 1) && (!noSanaOnly || w.ns === 1)) c[w.p] = (c[w.p] ?? 0) + 1
     return c
-  }, [data, canton])
+  }, [data, canton, freeOnly, noSanaOnly])
 
   // deep link focus once data is there
   useEffect(() => {
@@ -74,9 +86,19 @@ export function VisplanerApp({ initialLang = 'de' }: { initialLang?: Lang }) {
     set('w', selectedId)
     set('canton', canton)
     set('lang', lang !== 'de' ? lang : null)
+    set('free', freeOnly ? '1' : null)
+    set('nosana', noSanaOnly ? '1' : null)
     window.history.replaceState(null, '', url)
     document.documentElement.lang = lang
-  }, [selectedId, canton, lang])
+  }, [selectedId, canton, lang, freeOnly, noSanaOnly])
+  const chooseLang = (l: Lang) => {
+    setLang(l)
+    try {
+      localStorage.setItem('pp-lang', l)
+    } catch {
+      /* ignore */
+    }
+  }
 
   const pick = useCallback(
     (id: string) => {
@@ -107,19 +129,19 @@ export function VisplanerApp({ initialLang = 'de' }: { initialLang?: Lang }) {
 
   return (
     <div className="app">
-      <div className="mock-banner" role="note">
-        {t('banner', lang)}
-      </div>
       <header className="topbar">
+        <div className="mock-banner" role="note">
+          {t('banner', lang)}
+        </div>
         <div className="brand">
-          <strong>
+          <h1 className="brand-title">
             🎣 {t('title', lang)} <span className="scope">{t('scope', lang)}</span>
-          </strong>
+          </h1>
           <span className="tagline">{t('tagline', lang)}</span>
         </div>
         <div className="lang-toggle" role="group" aria-label="Language">
           {LANGS.map((l) => (
-            <button key={l} type="button" className={lang === l ? 'active' : ''} onClick={() => setLang(l)} aria-pressed={lang === l}>
+            <button key={l} type="button" className={lang === l ? 'active' : ''} onClick={() => chooseLang(l)} aria-pressed={lang === l}>
               {l.toUpperCase()}
             </button>
           ))}
@@ -127,7 +149,7 @@ export function VisplanerApp({ initialLang = 'de' }: { initialLang?: Lang }) {
       </header>
       <AboutStrip lang={lang} />
       <main className="main">
-        <div className="map-wrap">
+        <div className="map-wrap" role="region" aria-label={t('mapLabel', lang)}>
           {data ? (
             <MapView
               cantonInfo={data.cantons.cantons}
@@ -137,6 +159,8 @@ export function VisplanerApp({ initialLang = 'de' }: { initialLang?: Lang }) {
               selectedCanton={selected?.c ?? canton}
               focus={focus}
               overlay={overlay}
+              freeOnly={freeOnly}
+              noSanaOnly={noSanaOnly}
               onSelect={(id) => (id ? pick(id) : setSelectedId(null))}
               onCanton={(c) => chooseCanton(c)}
               onDetail={setDetailLoaded}
@@ -156,6 +180,7 @@ export function VisplanerApp({ initialLang = 'de' }: { initialLang?: Lang }) {
               c={data.cantons.cantons[selected.c]}
               border={borderOf(selected, data.border)}
               source={data.cantons.meta.sources[selected.s]}
+              access={data.cantons.meta.access}
               lang={lang}
               onBack={() => setSelectedId(null)}
               onCanton={() => chooseCanton(selected.c)}
@@ -177,6 +202,10 @@ export function VisplanerApp({ initialLang = 'de' }: { initialLang?: Lang }) {
               types={types}
               onToggleType={toggleType}
               onPick={pick}
+              freeOnly={freeOnly}
+              noSanaOnly={noSanaOnly}
+              onFree={setFreeOnly}
+              onNoSana={setNoSanaOnly}
             />
           ) : (
             <p className="muted">{error ?? t('loading', lang)}</p>
