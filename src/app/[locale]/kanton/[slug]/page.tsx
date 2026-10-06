@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { BORDER, CF, getCantonBySlug, watersOf } from '@/data/server'
+import { BORDER, CF, RULES, geoExtra, getCantonBySlug, watersOf } from '@/data/server'
+import { cantonQA } from '@/lib/answers'
 import { LANGS, PERMIT_COLORS, PERMIT_LABELS, PERMIT_ORDER, QUALITY_HELP, loc, qualityLabel, type Lang } from '@/types/water'
 import { crumbs, faqLd, isLang, pageMeta } from '@/lib/seo'
 import { p } from '@/i18n/pages'
@@ -46,7 +47,9 @@ export default async function CantonPage({ params }: { params: Promise<Params> }
   const free = ws.filter((w) => w.p === 'freiangel' || w.r === 'tg_shore').length
   const linkTxt = (ls: typeof c.links) => ls.map((l) => `${loc(l.label, lang)}: ${l.url.replace(/^mailto:/, '')}`).join(' · ')
 
+  const five = cantonQA(c, ws, lang, RULES, geoExtra, canton)
   const qa = [
+    ...five,
     { q: p('qCanton', lang, { canton }), a: `${loc(c.system, lang)}${c.quality === 'stub' ? ' ' + t('stubCanton', lang) : ''}` },
     { q: p('qWhereCanton', lang, { canton }), a: [linkTxt(buys), linkTxt(pacht)].filter(Boolean).join(' · ') || linkTxt(c.links) },
     { q: p('qFree', lang, { canton }), a: free ? p('aFreeYes', lang, { n: String(free), canton }) : p('aFreeNo', lang, { canton }) },
@@ -92,6 +95,16 @@ export default async function CantonPage({ params }: { params: Promise<Params> }
         </p>
       </section>
 
+      <section className="card faq five" aria-label={t('qaTitle', lang)}>
+        <h2>{t('qaTitle', lang)}</h2>
+        {five.map(({ q, a, id }) => (
+          <div key={id} id={`q-${id}`}>
+            <h3>{q.replace(`${canton}: `, '')}</h3>
+            <p>{a}</p>
+          </div>
+        ))}
+      </section>
+
       <section className="card">
         <h2>{t('whereToBuy', lang)}</h2>
         <ul>
@@ -135,7 +148,7 @@ export default async function CantonPage({ params }: { params: Promise<Params> }
 
       <section className="card faq">
         <h2>{p('faq', lang)}</h2>
-        {qa.map(({ q, a }) => (<div key={q}><h3>{q}</h3><p>{a}</p></div>))}
+        {qa.slice(five.length).map(({ q, a }) => (<div key={q}><h3>{q}</h3><p>{a}</p></div>))}
       </section>
 
       <section className="card">

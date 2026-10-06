@@ -68,6 +68,19 @@ Zürichsee, Vierwaldstättersee, Zugersee, Walensee, Hallwilersee, Doubs, Hochrh
 - Several cantonal buy pages (UR, OW, NW, GL, AI, TI) not reachable from the box → links kept, flagged "not verified from build box".
 - AG revier vectors only via order portal → WMS overlay.
 
+## Prices, rules, zones, parking (v0.5)
+- `scripts/lib/rules_cfg.py` is hand-curated. Each price/rule has a source URL and `CHECKED` date; missing stays missing.
+  - Profiles match water ids, id regexes, permit types or kinds.
+- `scripts/extract_osm_parking.py` and `scripts/extract_osm_places.py` (pyosmium) run on `data-raw/osm/switzerland.osm.pbf` from https://download.geofabrik.de/europe/switzerland-latest.osm.pbf. Overpass mirrors are unreachable from the box.
+- `scripts/build_extras.py` writes:
+  - `public/data/rules.json`
+  - `public/data/zones.geojson`
+  - `public/data/extra/XX.json` (pk = parking, z = zones per water)
+  - `src/data/generated/{rules,extra}.json`
+  - `docs/COVERAGE-ANSWERS.md`
+- WZVV: https://data.geo.admin.ch/ch.bafu.bundesinventare-vogelreservate/ (shapefile LV95). It is labelled as "fishing may be restricted – see Objektblatt", not as a blanket ban.
+
 ## Licences / attribution
+- Parking: © OpenStreetMap contributors, ODbL (attribution in panel + map).
 Cantonal OGD (ZH, BE, SO, VS, LU, SZ, SH, TG, AG) per their terms, swisstopo/BAFU geodata (open), basemap © OpenStreetMap contributors.
 Attribution is shown in the map footer and in the per-water source line.

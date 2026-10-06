@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { BORDER, CF, RULES, WATERS, geoExtra, getWater } from '@/data/server'
 import { QuickAnswers } from '@/components/QuickAnswers'
+import { waterQA } from '@/lib/answers'
 import { KIND_LABEL, LANGS, PERMIT_LABELS, PERMIT_WHERE, QUALITY_HELP, loc, qualityLabel, type Lang, type Water } from '@/types/water'
 import { borderOf, waterLinks, waterSummary } from '@/lib/water'
 import { crumbs, faqLd, isLang, pageMeta } from '@/lib/seo'
@@ -62,16 +63,12 @@ export default async function WaterPage({ params }: { params: Promise<Params> })
   const permit = loc(PERMIT_LABELS[w.p], lang)
   const summary = loc(waterSummary(w, c), lang)
 
+  const geo = geoExtra(w.id)
   const qa: { q: string; a: string }[] = [
+    ...waterQA(w, c, lang, RULES, geo, name),
     {
       q: p('qWhich', lang, { name }),
       a: w.p === 'unknown' ? p('answerStub', lang, { name, canton: cname }) : `${p('answerWater', lang, { name, canton: cname, permit })} ${summary}`,
-    },
-    {
-      q: p('qWhere', lang, { name }),
-      a: primary.length
-        ? primary.map((l) => `${loc(l.label, lang)}: ${l.url.replace(/^mailto:/, '')}`).join(' · ')
-        : p('aWhereNone', lang, { where: loc(PERMIT_WHERE[w.p], lang) }),
     },
   ]
   if (border) qa.push({ q: p('qBorder', lang, { name }), a: `${loc(border.name, lang)}: ${loc(border.authority, lang)}. ${loc(border.hint, lang)}` })
@@ -115,7 +112,7 @@ export default async function WaterPage({ params }: { params: Promise<Params> })
           <QualityBadge q={w.q} lang={lang} canton={w.c} long />
         </div>
       </div>
-      <QuickAnswers w={w} c={c} lang={lang} rules={RULES} geo={geoExtra(w.id)} open />
+      <QuickAnswers w={w} c={c} lang={lang} rules={RULES} geo={geo} open />
       <section className="answer" aria-label={p('shortAnswer', lang)}>
         <p>
           <strong>{p('shortAnswer', lang)}:</strong>{' '}

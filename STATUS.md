@@ -13,6 +13,25 @@
 ## Repo URL
 https://github.com/Jbartsch/visplaner-ch
 
+## v0.5 — Five questions (soft-launch feedback, 2026-10-06)
+A German friend tested the soft launch: Google first, then ChatGPT. His questions, in order: permit + price, parking, rules, catch limit, no-fishing zones. Foreign/guest access matters to him.
+- **QuickAnswers block** (`src/components/QuickAnswers.tsx`): five compact rows right under the water name, in the map panel (mobile bottom sheet above the buy section) and on `/{locale}/gewaesser/{slug}`. Each row is icon + question + short answer, or «nicht in unseren Daten». Rows expand to the detail with source and check date.
+- **Prices + rules:** `scripts/lib/rules_cfg.py` → `public/data/rules.json`. Hand-curated; every value carries a source URL.
+  - Full rules for ZH and BE: closed seasons, minimum sizes, bag limits, methods, night fishing, guests/foreigners.
+  - Prices for ZH, BE, GR, LU (Sempacher-/Vierwaldstättersee), SZ, SG (Bodensee), VS and TI, split resident vs non-resident.
+  - Federal TSchV baseline applies everywhere.
+- **Sperrzonen:** `public/data/zones.geojson` combines BE ANGFISCH Schongebiete, TG Fischereiverbote and BAFU WZVV. The map shows it as hatched red / dashed purple with a legend toggle.
+  - The per-water list of zones is computed with a 150 m buffer.
+  - ZH zones are text only (from the Vorschriften).
+- **Parking:** nearest `amenity=parking` from OSM (Geofabrik CH extract 2026-10-04, `scripts/extract_osm_parking.py`). Excludes private/customers/permit access.
+  - Up to 6 spread-out spots per water, labelled with the nearest locality.
+  - Shown as P markers on the map, with route and OSM links. Carries an ODbL attribution and a "check signage" note.
+- **SEO/AEO:** the five questions (his phrasing) appear as crawlable text plus FAQPage JSON-LD on water pages, canton pages and `/{locale}`, in all locales.
+  - The landing page and map side panel have a subtle question row (`?ask=park` opens that row).
+- **Fix:** ZH Revier 2/3 geometries were swapped (Greifensee ↔ Pfäffikersee).
+- Coverage per canton: `docs/COVERAGE-ANSWERS.md` (generated).
+- Rebuild: `.venv/bin/python scripts/build_extras.py`. Needs data-raw/osm (Geofabrik pbf → extract scripts), BE/TG raw and data-raw/zones/wzvv.
+
 ## v0.4 — Friend soft-launch gate (2026-10-06)
 Scope from the Astra design review (`/workspace/petripass-design-review/gpt-6-astra-review.md`) plus the earlier soft-launch review.
 - **Freiangeln + no-SaNa filters** (`?free=1`, `?nosana=1`). They use sourced flags only (`scripts/lib/access_cfg.py`, each with its official URL and check date). Waters without a source stay unknown and are not counted as "no".
@@ -32,7 +51,7 @@ Scope from the Astra design review (`/workspace/petripass-design-review/gpt-6-as
 - **Mobile smoke test:** `research/screens/` (Playwright, Chrome with iPhone 14 / Pixel 7 emulation; not real Safari).
 
 ### Deferred until after soft launch
-Winter/ice, species by season, rules summary/chat. No WIP code exists for these yet.
+Winter/ice, species by season, chat. (Rules summary shipped in v0.5 for ZH/BE.) No WIP code exists for these yet.
 
 ### Open issues
 - IT copy is machine-drafted. BE reach notes come from the dataset in German only.
