@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { BORDER, CF, WATERS, getWater } from '@/data/server'
-import { KIND_LABEL, LANGS, PERMIT_LABELS, PERMIT_WHERE, QUALITY_HELP, QUALITY_LABELS, loc, type Lang, type Water } from '@/types/water'
+import { KIND_LABEL, LANGS, PERMIT_LABELS, PERMIT_WHERE, QUALITY_HELP, loc, qualityLabel, type Lang, type Water } from '@/types/water'
 import { borderOf, waterLinks, waterSummary } from '@/lib/water'
 import { crumbs, faqLd, isLang, pageMeta } from '@/lib/seo'
 import { p } from '@/i18n/pages'
@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
     lang,
     `/gewaesser/${w.slug}`,
     `${p('waterTitle', lang, { name })} | Petripass`,
-    p('waterDesc', lang, { name, canton: loc(c.name, lang), permit: loc(PERMIT_LABELS[w.p], lang), where: whereText(w, lang), quality: loc(QUALITY_LABELS[w.q], lang) }),
+    p('waterDesc', lang, { name, canton: loc(c.name, lang), permit: loc(PERMIT_LABELS[w.p], lang), where: whereText(w, lang), quality: qualityLabel(w.q, lang, w.c) }),
   )
 }
 
@@ -74,7 +74,7 @@ export default async function WaterPage({ params }: { params: Promise<Params> })
     },
   ]
   if (border) qa.push({ q: p('qBorder', lang, { name }), a: `${loc(border.name, lang)}: ${loc(border.authority, lang)}. ${loc(border.hint, lang)}` })
-  qa.push({ q: p('qReliable', lang), a: p('aReliable', lang, { quality: loc(QUALITY_LABELS[w.q], lang), help: loc(QUALITY_HELP[w.q], lang), source: src?.label ?? '' }) })
+  qa.push({ q: p('qReliable', lang), a: p('aReliable', lang, { quality: qualityLabel(w.q, lang, w.c), help: loc(QUALITY_HELP[w.q], lang), source: src?.label ?? '' }) })
   qa.push({ q: p('qCanton', lang, { canton: cname }), a: loc(c.system, lang) })
 
   const related = WATERS.filter((o) => o.c === w.c && o.id !== w.id && (o.k === 'lake' || o.k === 'river'))
@@ -111,7 +111,7 @@ export default async function WaterPage({ params }: { params: Promise<Params> })
         <div className="meta" style={{ marginTop: '0.4rem' }}>
           <span className="pill">{t('canton', lang)} {c.code}</span>
           <span className="pill">{loc(KIND_LABEL[w.k], lang)}</span>
-          <QualityBadge q={w.q} lang={lang} long />
+          <QualityBadge q={w.q} lang={lang} canton={w.c} long />
         </div>
       </div>
       <section className="answer" aria-label={p('shortAnswer', lang)}>

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { IBM_Plex_Sans } from 'next/font/google'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import '../globals.css'
+import { PetripassAnalytics } from '@/components/Analytics'
 import { SITE } from '@/lib/water'
 
 const plex = IBM_Plex_Sans({ subsets: ['latin'], weight: ['400', '600', '700'], display: 'swap' })
@@ -21,7 +22,10 @@ export const viewport: Viewport = { width: 'device-width', initialScale: 1, them
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="de" className={plex.className}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <PetripassAnalytics />
+      </body>
     </html>
   )
 }

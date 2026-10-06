@@ -2,6 +2,7 @@ import type { Lang } from '@/types/water'
 import { LANGS } from '@/types/water'
 import { t } from '@/i18n/copy'
 import { p } from '@/i18n/pages'
+import { reportUrl } from '@/lib/water'
 
 export function JsonLd({ data }: { data: unknown }) {
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, '\\u003c') }} />
@@ -29,7 +30,10 @@ export function PageShell({ lang, path, children }: { lang: Lang; path: string; 
         {children}
         <p className="disclaimer">{t('disclaimer', lang)}</p>
         <p className="source">
-          <a href={`/?lang=${lang}`}>{p('openMapAll', lang)} →</a> · {t('footerData', lang)}
+          <a href={`/?lang=${lang}`}>{p('openMapAll', lang)} →</a> · {t('footerData', lang)} ·{' '}
+          <a href={reportUrl('Petripass: missing/wrong water or canton', t('reportBody', lang))} target="_blank" rel="noopener noreferrer">
+            {t('cantonMissing', lang)}
+          </a>
         </p>
       </main>
     </div>

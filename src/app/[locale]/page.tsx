@@ -50,7 +50,7 @@ export default async function LocaleHome({ params }: { params: Promise<Params> }
                 <tr key={code}>
                   <td><a href={`/${lang}/kanton/${c.slug}`}><strong>{code}</strong> {loc(c.name, lang)}</a></td>
                   <td className="small">{loc(c.system, lang)}</td>
-                  <td><QualityBadge q={c.quality} lang={lang} /><div className="muted small">{c.count} {t('waters', lang)}</div></td>
+                  <td><QualityBadge q={c.quality} lang={lang} canton={c.code} /><div className="muted small">{c.count} {t('waters', lang)}</div></td>
                 </tr>
               )
             })}

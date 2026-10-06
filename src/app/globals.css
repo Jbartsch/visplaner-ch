@@ -353,3 +353,4 @@ html, body, #root { margin: 0; height: 100%; }
 .map-cta { display: inline-block; background: var(--accent); color: #fff; padding: 0.6rem 1rem; border-radius: 10px; text-decoration: none; font-weight: 700; }
 @media (max-width: 640px) { .wlist { columns: 1; } }
 .page-tag { flex: 1 1 auto; color: #94a3b8; font-size: 0.85rem; margin-left: 0.6rem; }
+.report { display: block; margin-top: 0.6rem; color: #64748b; } .report a, a.report { color: #64748b; }
