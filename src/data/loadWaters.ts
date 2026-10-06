@@ -1,4 +1,5 @@
 import type { BorderInfo, Canton, CantonsFile, Water, WaterExtra } from '@/types/water'
+import type { RulesFile, WaterGeoExtra } from '@/lib/rules'
 
 export type AppData = { cantons: CantonsFile; waters: Water[]; border: Record<string, BorderInfo> }
 
@@ -45,4 +46,15 @@ const detailCache = new Map<string, Promise<Record<string, WaterExtra>>>()
 /** Per-canton water extras (links, notes, revier, access keys) – lazy-loaded when a water is opened. */
 export function loadDetails(c: Canton): Promise<Record<string, WaterExtra>> {
   return cached(detailCache, c, () => j<Record<string, WaterExtra>>(`/data/details/${c}.json`))
+}
+
+const rulesCache = new Map<string, Promise<RulesFile>>()
+/** Sourced prices + rules per canton (small, shared by all waters). */
+export function loadRules(): Promise<RulesFile> {
+  return cached(rulesCache, 'rules', () => j<RulesFile>('/data/rules.json'))
+}
+const geoXCache = new Map<string, Promise<Record<string, WaterGeoExtra>>>()
+/** Per-canton nearest OSM parking + intersecting no-fishing zones per water. */
+export function loadGeoExtra(c: Canton): Promise<Record<string, WaterGeoExtra>> {
+  return cached(geoXCache, c, () => j<Record<string, WaterGeoExtra>>(`/data/extra/${c}.json`))
 }

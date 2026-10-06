@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { loadDetails } from '@/data/loadWaters'
+import { loadDetails, loadGeoExtra, loadRules } from '@/data/loadWaters'
+import type { Parking, RulesFile, WaterGeoExtra } from '@/lib/rules'
+import { QuickAnswers } from './QuickAnswers'
 import type { BorderInfo, CantonInfo, CantonsFile, Lang, SourceDef, Water, WaterExtra } from '@/types/water'
 import { KIND_LABEL, loc } from '@/types/water'
 import { t } from '@/i18n/copy'
@@ -17,9 +19,38 @@ type Props = {
   lang: Lang
   onBack: () => void
   onCanton: () => void
+  onParking?: (p: Parking) => void
+  onGeo?: (id: string, g: WaterGeoExtra | null) => void
 }
 
-export function InfoPanel({ w: base, c, border, source, access, lang, onBack, onCanton }: Props) {
+export function InfoPanel({ w: base, c, border, source, access, lang, onBack, onCanton, onParking, onGeo }: Props) {
+  const [rules, setRules] = useState<RulesFile | null | undefined>(undefined)
+  const [geo, setGeo] = useState<{ id: string; g: WaterGeoExtra | null } | null>(null)
+  useEffect(() => {
+    let live = true
+    loadRules().then(
+      (r) => live && setRules(r),
+      () => live && setRules(null),
+    )
+    return () => {
+      live = false
+    }
+  }, [])
+  useEffect(() => {
+    let live = true
+    loadGeoExtra(base.c).then(
+      (d) => {
+        if (!live) return
+        setGeo({ id: base.id, g: d[base.id] ?? null })
+        onGeo?.(base.id, d[base.id] ?? null)
+      },
+      () => live && setGeo({ id: base.id, g: null }),
+    )
+    return () => {
+      live = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [base.id, base.c])
   const [copied, setCopied] = useState(false)
   const [extra, setExtra] = useState<{ id: string; x?: WaterExtra } | null>(null)
   useEffect(() => {
@@ -69,6 +100,7 @@ export function InfoPanel({ w: base, c, border, source, access, lang, onBack, on
           </div>
         </div>
       </div>
+      <QuickAnswers w={w} c={c} lang={lang} rules={rules} geo={geo?.id === base.id ? geo.g : undefined} onParking={onParking} />
       <WaterFacts w={w} c={c} border={border} lang={lang} access={access} source={source} />
       <p className="source">
         <a href={`/${lang}/gewaesser/${w.slug}`}>{t('detailsPage', lang)} →</a> ·{' '}

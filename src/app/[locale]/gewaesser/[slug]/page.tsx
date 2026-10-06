@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { BORDER, CF, WATERS, getWater } from '@/data/server'
+import { BORDER, CF, RULES, WATERS, geoExtra, getWater } from '@/data/server'
+import { QuickAnswers } from '@/components/QuickAnswers'
 import { KIND_LABEL, LANGS, PERMIT_LABELS, PERMIT_WHERE, QUALITY_HELP, loc, qualityLabel, type Lang, type Water } from '@/types/water'
 import { borderOf, waterLinks, waterSummary } from '@/lib/water'
 import { crumbs, faqLd, isLang, pageMeta } from '@/lib/seo'
@@ -114,6 +115,7 @@ export default async function WaterPage({ params }: { params: Promise<Params> })
           <QualityBadge q={w.q} lang={lang} canton={w.c} long />
         </div>
       </div>
+      <QuickAnswers w={w} c={c} lang={lang} rules={RULES} geo={geoExtra(w.id)} open />
       <section className="answer" aria-label={p('shortAnswer', lang)}>
         <p>
           <strong>{p('shortAnswer', lang)}:</strong>{' '}

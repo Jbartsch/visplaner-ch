@@ -12,12 +12,15 @@ type Props = {
   onToggle: (t: PermitType) => void
   overlay: boolean
   onOverlay: (v: boolean) => void
+  zones: boolean
+  onZones: (v: boolean) => void
+  parking: boolean
   showZoomHint: boolean
 }
 
 export const QCOLORS: Record<Quality, string> = { official: '#16a34a', derived: '#f59e0b', stub: '#9ca3af' }
 
-export function Legend({ lang, types, counts, onToggle, overlay, onOverlay, showZoomHint }: Props) {
+export function Legend({ lang, types, counts, onToggle, overlay, onOverlay, zones, onZones, parking, showZoomHint }: Props) {
   const ref = useRef<HTMLDetailsElement>(null)
   // collapsed by default on small screens so the map stays visible
   useEffect(() => {
@@ -51,6 +54,28 @@ export function Legend({ lang, types, counts, onToggle, overlay, onOverlay, show
           <input type="checkbox" checked={overlay} onChange={(e) => onOverlay(e.target.checked)} />
           {t('officialOverlay', lang)} (BE, AG)
         </label>
+        <label className="overlay-toggle">
+          <input type="checkbox" checked={zones} onChange={(e) => onZones(e.target.checked)} />
+          {t('zoneOverlay', lang)}
+        </label>
+        {zones && (
+          <div className="qlegend">
+            <span className="qitem">
+              <span className="zsw fish" /> {t('zFish', lang)}
+            </span>
+            <span className="qitem">
+              <span className="zsw wzvv" /> WZVV ({lang === 'de' ? 'Bund' : lang === 'en' ? 'federal' : lang === 'it' ? 'Confed.' : 'Conféd.'})
+            </span>
+            <span className="qitem small muted">{t('zoneOverlayNote', lang)}</span>
+          </div>
+        )}
+        {parking && (
+          <div className="qlegend">
+            <span className="qitem">
+              <span className="pk-dot">P</span> {t('parkLayer', lang)}
+            </span>
+          </div>
+        )}
         {showZoomHint && <div className="zoom-hint">🔍 {t('zoomForDetail', lang)}</div>}
       </details>
     </div>
