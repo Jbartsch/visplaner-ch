@@ -1,0 +1,22 @@
+name: fetch-geodata
+# Fetch official geodata from hosts unreachable from the dev box. Manual or on change of the fetch script.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - scripts/fetch_blocked.sh
+      - .github/workflows/fetch-geodata.yml
+permissions:
+  contents: read
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/fetch_blocked.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: geodata-blocked
+          path: out/
+          retention-days: 7
