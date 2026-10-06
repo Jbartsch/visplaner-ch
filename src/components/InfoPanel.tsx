@@ -51,7 +51,7 @@ export function InfoPanel({ w, c, border, source, lang, onBack, onCanton }: Prop
                 {t('revier', lang)} {w.x.revier}
               </span>
             )}
-            <QualityBadge q={w.q} lang={lang} />
+            <QualityBadge q={w.q} lang={lang} canton={w.c} />
           </div>
         </div>
       </div>

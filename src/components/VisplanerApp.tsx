@@ -9,7 +9,7 @@ import { AboutStrip } from './AboutStrip'
 import { loadAppData, type AppData } from '@/data/loadWaters'
 import type { Bbox, Canton, Lang, PermitType } from '@/types/water'
 import { CANTON_CODES, LANGS, PERMIT_ORDER } from '@/types/water'
-import { borderOf, searchText } from '@/lib/water'
+import { borderOf, reportUrl, searchText } from '@/lib/water'
 import { t } from '@/i18n/copy'
 
 const MapView = dynamic(() => import('./MapView').then((m) => m.MapView), {
@@ -184,7 +184,10 @@ export function VisplanerApp({ initialLang = 'de' }: { initialLang?: Lang }) {
         </aside>
       </main>
       <footer className="footer">
-        {t('footerData', lang)} · <a href={`/${lang}`}>{t('allCantons', lang)} (FAQ)</a>
+        {t('footerData', lang)} · <a href={`/${lang}`}>{t('allCantons', lang)} (FAQ)</a> ·{' '}
+        <a href={reportUrl('Petripass: missing/wrong water or canton', t('reportBody', lang))} target="_blank" rel="noopener noreferrer" data-ev="report_missing">
+          {t('cantonMissing', lang)}
+        </a>
       </footer>
     </div>
   )

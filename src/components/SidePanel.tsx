@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import type { Canton, CantonInfo, Lang, PermitType, Water } from '@/types/water'
 import { PERMIT_COLORS, PERMIT_LABELS, PERMIT_ORDER, loc } from '@/types/water'
-import { normalize } from '@/lib/water'
+import { normalize, reportUrl } from '@/lib/water'
 import { t } from '@/i18n/copy'
 import { QualityBadge } from './Badges'
 import { QCOLORS } from './Legend'
@@ -86,7 +86,7 @@ export function SidePanel({ lang, waters, hay, cantonInfo, order, query, onQuery
         <div className={`canton-card q-${ci.quality}`}>
           <div className="canton-card-head">
             <strong>{loc(ci.name, lang)}</strong>
-            <QualityBadge q={ci.quality} lang={lang} />
+            <QualityBadge q={ci.quality} lang={lang} canton={ci.code} />
           </div>
           <p>{loc(ci.system, lang)}</p>
           {ci.quality === 'stub' && <p className="stub-note">⚠ {t('stubCanton', lang)}</p>}
@@ -132,6 +132,9 @@ export function SidePanel({ lang, waters, hay, cantonInfo, order, query, onQuery
                 </button>
               ))}
             </div>
+            <a className="small report" href={reportUrl('Petripass: missing/wrong water or canton', t('reportBody', lang))} target="_blank" rel="noopener noreferrer" data-ev="report_missing">
+              ⚑ {t('cantonMissing', lang)}
+            </a>
           </details>
         )
       )}

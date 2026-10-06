@@ -38,12 +38,12 @@ export function Legend({ lang, types, counts, onToggle, overlay, onOverlay, show
             </li>
           ))}
         </ul>
-        <div className="legend-title small">{t('coverage', lang)}</div>
+        <div className="legend-title small">{t('dataOrigin', lang)}</div>
         <div className="qlegend">
           {(['official', 'derived', 'stub'] as Quality[]).map((q) => (
             <span key={q} className="qitem">
               <span className="qbox" style={{ background: QCOLORS[q] }} />
-              {loc(QUALITY_LABELS[q], lang)}
+              {q === 'official' ? t('srcOpenData', lang) : loc(QUALITY_LABELS[q], lang)}
             </span>
           ))}
         </div>

@@ -1,7 +1,7 @@
 import type { BorderInfo, CantonInfo, Lang, Water } from '@/types/water'
 import { PERMIT_COLORS, PERMIT_LABELS, PERMIT_WHERE, loc } from '@/types/water'
 import { t } from '@/i18n/copy'
-import { waterLinks, waterRule, waterSummary } from '@/lib/water'
+import { SITE, linkTarget, reportUrl, waterLinks, waterRule, waterSummary } from '@/lib/water'
 import { BuyVia } from './BuyVia'
 
 /** Permit card + buy links + border info + notes. Server-safe (BuyVia is a client island). */
@@ -31,17 +31,17 @@ export function WaterFacts({ w, c, border, lang }: { w: Water; c: CantonInfo; bo
           {t('whereToBuy', lang)} · <span className="muted">{loc(PERMIT_WHERE[w.p], lang)}</span>
         </h3>
         {primary.map((a, i) => (
-          <a key={a.url + i} className={i === 0 ? 'buy-btn' : 'buy-btn secondary'} href={a.url} {...ext(a.url)}>
+          <a key={a.url + i} className={i === 0 ? 'buy-btn' : 'buy-btn secondary'} href={a.url} {...ext(a.url)} data-ev="buy_click" data-w={w.id} data-c={w.c} data-t={linkTarget(a)}>
             {loc(a.label, lang)} →{a.verified === false && <span className="unverified" title={t('unverified', lang)}> *</span>}
           </a>
         ))}
         {primary.length === 0 && w.p !== 'closed' && <p className="muted small">{t('noBuy', lang)}</p>}
-        {(w.p === 'patent' || w.p === 'mixed') && primary.length > 0 && <BuyVia lang={lang} waterId={w.id} />}
+        {(w.p === 'patent' || w.p === 'mixed') && primary.length > 0 && <BuyVia lang={lang} waterId={w.id} canton={w.c} />}
         {secondary.length > 0 && (
           <div className="more-links">
             <span className="muted small">{t('moreLinks', lang)}:</span>
             {secondary.map((a, i) => (
-              <a key={a.url + i} className="action-link" href={a.url} {...ext(a.url)}>
+              <a key={a.url + i} className="action-link" href={a.url} {...ext(a.url)} {...(a.kind === 'pacht' || a.kind === 'enquire' || a.kind === 'prices' ? { 'data-ev': 'buy_click', 'data-w': w.id, 'data-c': w.c, 'data-t': linkTarget(a) } : {})}>
                 {a.kind === 'enquire' ? '✉ ' : a.kind === 'pacht' ? '👥 ' : 'ⓘ '}
                 {loc(a.label, lang)}
                 {a.verified === false && <span className="unverified" title={t('unverified', lang)}> *</span>}
@@ -94,6 +94,11 @@ export function WaterFacts({ w, c, border, lang }: { w: Water; c: CantonInfo; bo
           </p>
         </div>
       )}
+      <p className="small report">
+        <a href={reportUrl(`Petripass: ${w.id} (${w.c})`, `${t('reportBody', lang)}\n\n${SITE}/${lang}/gewaesser/${w.slug}\n`)} target="_blank" rel="noopener noreferrer" data-ev="report_error" data-w={w.id} data-c={w.c}>
+          ⚑ {t('reportError', lang)}
+        </a>
+      </p>
     </>
   )
 }

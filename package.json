@@ -12,6 +12,7 @@
     "data": "bash scripts/fetch_data.sh && bash scripts/fetch_cantons.sh && python3 scripts/fetch_ch.py && python3 scripts/fetch_vec25.py && python3 scripts/build_all.py"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "maplibre-gl": "^6.12.0",
     "next": "16.3.8",
     "react": "19.3.0",

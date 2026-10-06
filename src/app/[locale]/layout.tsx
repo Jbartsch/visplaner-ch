@@ -2,6 +2,7 @@ import type { Viewport } from 'next'
 import { notFound } from 'next/navigation'
 import { IBM_Plex_Sans } from 'next/font/google'
 import '../globals.css'
+import { PetripassAnalytics } from '@/components/Analytics'
 import { LANGS, type Lang } from '@/types/water'
 
 const plex = IBM_Plex_Sans({ subsets: ['latin'], weight: ['400', '600', '700'], display: 'swap' })
@@ -17,7 +18,10 @@ export default async function LocaleLayout({ children, params }: { children: Rea
   if (!(LANGS as string[]).includes(locale)) notFound()
   return (
     <html lang={locale as Lang} className={plex.className}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <PetripassAnalytics />
+      </body>
     </html>
   )
 }

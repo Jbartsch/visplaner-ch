@@ -112,17 +112,26 @@ export const PERMIT_WHERE: Record<PermitType, Localized> = {
 }
 
 export const QUALITY_LABELS: Record<Quality, Localized> = {
-  official: { de: 'Amtlich', en: 'Official', fr: 'Officiel', it: 'Ufficiale' },
+  official: { de: 'Quelle: Kanton (OGD)', en: 'Source: canton (open data)', fr: 'Source : canton (données ouvertes)', it: 'Fonte: Cantone (open data)' },
   derived: { de: 'Abgeleitet', en: 'Derived', fr: 'Déduit', it: 'Dedotto' },
-  stub: { de: 'Unvollständig', en: 'Stub', fr: 'Incomplet', it: 'Incompleto' },
+  stub: { de: 'Unvollständig', en: 'Incomplete', fr: 'Incomplet', it: 'Incompleto' },
 }
+
+/** Provenance label with the canton code, e.g. "Quelle: Kanton ZH (OGD)". Describes where the data comes from, not an official status. */
+export const QUALITY_LABELS_C: Record<Quality, Localized> = {
+  official: { de: 'Quelle: Kanton {c} (OGD)', en: 'Source: Canton {c} (open data)', fr: 'Source : canton {c} (données ouvertes)', it: 'Fonte: Cantone {c} (open data)' },
+  derived: { de: 'Abgeleitet aus Regeln Kanton {c}', en: 'Derived from canton {c} rules', fr: 'Déduit des règles du canton {c}', it: 'Dedotto dalle regole del Cantone {c}' },
+  stub: { de: 'Unvollständig – Kanton {c} fragen', en: 'Incomplete – check with canton {c}', fr: 'Incomplet – vérifier auprès du canton {c}', it: 'Incompleto – verificare con il Cantone {c}' },
+}
+export const qualityLabel = (q: Quality, lang: Lang, canton?: string) =>
+  canton ? loc(QUALITY_LABELS_C[q], lang).replace('{c}', canton) : loc(QUALITY_LABELS[q], lang)
 
 export const QUALITY_HELP: Record<Quality, Localized> = {
   official: {
-    de: 'Bewilligungstyp stammt pro Gewässer aus einem amtlichen kantonalen Geodatensatz.',
-    en: 'Permit type comes per water from an official cantonal geodataset.',
-    fr: 'Type de permis issu, par plan d\'eau, d\'un jeu de géodonnées cantonal officiel.',
-    it: 'Tipo di patente tratto, per ogni acqua, da un geodato cantonale ufficiale.',
+    de: 'Bewilligungstyp pro Gewässer übernommen aus einem offenen Geodatensatz des Kantons (Petripass ist keine Behörde; massgebend bleiben die Vorschriften).',
+    en: 'Permit type taken per water from a cantonal open geodataset (Petripass is not an authority; the regulations prevail).',
+    fr: 'Type de permis repris, par plan d\'eau, d\'un jeu de géodonnées ouvert du canton (Petripass n\'est pas une autorité ; les prescriptions font foi).',
+    it: 'Tipo di patente ripreso, per ogni acqua, da un geodato aperto del Cantone (Petripass non è un\'autorità; fanno fede le prescrizioni).',
   },
   derived: {
     de: 'Bewilligungstyp aus den publizierten Kantonsregeln abgeleitet – Abschnitte können abweichen.',

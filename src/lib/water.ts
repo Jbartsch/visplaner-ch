@@ -46,3 +46,21 @@ export function normalize(s: string): string {
 export function searchText(w: Water, c: CantonInfo): string {
   return normalize([w.n.de, w.n.fr, w.n.it, w.n.en, c.code, c.name.de, c.name.fr, c.name.it, c.name.en].filter(Boolean).join(' '))
 }
+
+/** Analytics target bucket for an outbound buy/enquire link. */
+export function linkTarget(a: { kind: string; url: string }): string {
+  const u = a.url.toLowerCase()
+  if (u.includes('hejfish')) return 'hejfish'
+  if (a.kind === 'pacht' || a.kind === 'enquire' || u.startsWith('mailto:')) return 'paechter'
+  if (u.includes('efj') || u.includes('jagdfischerei') || u.includes('fischerapp')) return 'efj'
+  if (a.kind === 'app') return 'app'
+  if (a.kind === 'buy') return 'shop'
+  return a.kind || 'info'
+}
+
+/** "Report an error" link: mailto if NEXT_PUBLIC_FEEDBACK_EMAIL is set, else a prefilled GitHub issue. */
+export function reportUrl(subject: string, body: string): string {
+  const mail = process.env.NEXT_PUBLIC_FEEDBACK_EMAIL
+  if (mail) return `mailto:${mail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+  return `https://github.com/Jbartsch/visplaner-ch/issues/new?title=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}&labels=data`
+}

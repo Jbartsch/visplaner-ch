@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { BORDER, CF, getCantonBySlug, watersOf } from '@/data/server'
-import { LANGS, PERMIT_COLORS, PERMIT_LABELS, PERMIT_ORDER, QUALITY_HELP, QUALITY_LABELS, loc, type Lang } from '@/types/water'
+import { LANGS, PERMIT_COLORS, PERMIT_LABELS, PERMIT_ORDER, QUALITY_HELP, loc, qualityLabel, type Lang } from '@/types/water'
 import { crumbs, faqLd, isLang, pageMeta } from '@/lib/seo'
 import { p } from '@/i18n/pages'
 import { t } from '@/i18n/copy'
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   const { lang, c } = x
   const canton = loc(c.name, lang)
   return pageMeta(lang, `/kanton/${c.slug}`, `${p('cantonTitle', lang, { canton })} | Petripass`,
-    p('cantonDesc', lang, { canton, system: loc(c.system, lang), n: String(c.count), quality: loc(QUALITY_LABELS[c.quality], lang) }))
+    p('cantonDesc', lang, { canton, system: loc(c.system, lang), n: String(c.count), quality: qualityLabel(c.quality, lang, c.code) }))
 }
 
 const KRANK = { lake: 0, river: 1, canal: 2, pond: 3, reach: 4 } as const
@@ -50,7 +50,7 @@ export default async function CantonPage({ params }: { params: Promise<Params> }
     { q: p('qCanton', lang, { canton }), a: `${loc(c.system, lang)}${c.quality === 'stub' ? ' ' + t('stubCanton', lang) : ''}` },
     { q: p('qWhereCanton', lang, { canton }), a: [linkTxt(buys), linkTxt(pacht)].filter(Boolean).join(' · ') || linkTxt(c.links) },
     { q: p('qFree', lang, { canton }), a: free ? p('aFreeYes', lang, { n: String(free), canton }) : p('aFreeNo', lang, { canton }) },
-    { q: p('qReliable', lang), a: p('aReliable', lang, { quality: loc(QUALITY_LABELS[c.quality], lang), help: loc(QUALITY_HELP[c.quality], lang), source: c.sources.map((s) => s.label).join('; ') }) },
+    { q: p('qReliable', lang), a: p('aReliable', lang, { quality: qualityLabel(c.quality, lang, c.code), help: loc(QUALITY_HELP[c.quality], lang), source: c.sources.map((s) => s.label).join('; ') }) },
   ]
   const ld = [
     { '@context': 'https://schema.org', '@type': 'AdministrativeArea', name: `${t('canton', lang)} ${canton}`, url: `${SITE}/${lang}/kanton/${c.slug}`, containedInPlace: { '@type': 'Country', name: 'Switzerland' } },
@@ -68,7 +68,7 @@ export default async function CantonPage({ params }: { params: Promise<Params> }
         <h1>{p('cantonTitle', lang, { canton })}</h1>
         <div className="meta" style={{ marginTop: '0.4rem' }}>
           <span className="pill">{c.code}</span>
-          <QualityBadge q={c.quality} lang={lang} long />
+          <QualityBadge q={c.quality} lang={lang} canton={c.code} long />
         </div>
       </div>
       <section className="answer">
@@ -108,7 +108,7 @@ export default async function CantonPage({ params }: { params: Promise<Params> }
         <h2>{p('coverageTitle', lang)}</h2>
         <table className="ctable">
           <tbody>
-            <tr><th>{t('quality', lang)}</th><td><QualityBadge q={c.quality} lang={lang} /> · ✓ {c.byQuality.official ?? 0} · ≈ {c.byQuality.derived ?? 0} · ? {c.byQuality.stub ?? 0} ({c.count} {t('waters', lang)})</td></tr>
+            <tr><th>{t('quality', lang)}</th><td><QualityBadge q={c.quality} lang={lang} canton={c.code} /> · ✓ {c.byQuality.official ?? 0} · ≈ {c.byQuality.derived ?? 0} · ? {c.byQuality.stub ?? 0} ({c.count} {t('waters', lang)})</td></tr>
             <tr><th>{t('legendTitle', lang)}</th><td>{PERMIT_ORDER.filter((k) => c.byPermit[k]).map((k) => (
               <span key={k} style={{ marginRight: '0.6rem', whiteSpace: 'nowrap' }}><span className="swatch" style={{ background: PERMIT_COLORS[k] }} /> {loc(PERMIT_LABELS[k], lang)} {c.byPermit[k]}</span>
             ))}</td></tr>
