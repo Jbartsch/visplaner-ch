@@ -1,49 +1,34 @@
-import type { Bbox, WaterEntry, WaterProps } from '@/types/water'
+import type { BorderInfo, Canton, CantonsFile, Water } from '@/types/water'
 
-type Geometry = { type: string; coordinates: unknown }
-export type WaterFeature = { type: 'Feature'; properties: WaterProps; geometry: Geometry }
-export type WaterFC = { type: 'FeatureCollection'; features: WaterFeature[] }
+export type AppData = { cantons: CantonsFile; waters: Water[]; border: Record<string, BorderInfo> }
 
-let rawPromise: Promise<WaterFC> | null = null
+let p: Promise<AppData> | null = null
 
-export function loadWaters(): Promise<WaterFC> {
-  rawPromise ??= fetch('/data/waters.geojson').then((r) => {
-    if (!r.ok) throw new Error(`waters.geojson ${r.status}`)
-    return r.json() as Promise<WaterFC>
-  })
-  return rawPromise
+async function j<T>(url: string): Promise<T> {
+  const r = await fetch(url)
+  if (!r.ok) throw new Error(`${url} ${r.status}`)
+  return r.json() as Promise<T>
 }
 
-function extend(b: Bbox, c: unknown): void {
-  if (Array.isArray(c) && typeof c[0] === 'number') {
-    const [x, y] = c as [number, number]
-    if (x < b[0]) b[0] = x
-    if (y < b[1]) b[1] = y
-    if (x > b[2]) b[2] = x
-    if (y > b[3]) b[3] = y
-  } else if (Array.isArray(c)) {
-    for (const cc of c) extend(b, cc)
+export function loadAppData(): Promise<AppData> {
+  p ??= Promise.all([
+    j<CantonsFile>('/data/cantons.json'),
+    j<{ waters: Water[] }>('/data/waters-index.json'),
+    j<Record<string, BorderInfo>>('/data/border.json'),
+  ]).then(([cantons, w, border]) => ({ cantons, waters: w.waters, border }))
+  return p
+}
+
+type FC = { type: 'FeatureCollection'; features: unknown[] }
+const cantonCache = new Map<Canton, Promise<FC>>()
+export function loadCantonGeo(c: Canton): Promise<FC> {
+  let q = cantonCache.get(c)
+  if (!q) {
+    q = j<FC>(`/data/cantons/${c}.geojson`)
+    cantonCache.set(c, q)
   }
+  return q
 }
-
-/** One entry per water id (several features may share an id, e.g. a revier's stream + pond). */
-export function buildIndex(fc: WaterFC): Map<string, WaterEntry> {
-  const idx = new Map<string, WaterEntry>()
-  for (const f of fc.features) {
-    const id = f.properties.id
-    let e = idx.get(id)
-    if (!e) {
-      e = { props: f.properties, bbox: [Infinity, Infinity, -Infinity, -Infinity] }
-      idx.set(id, e)
-    }
-    extend(e.bbox, f.geometry.coordinates)
-  }
-  return idx
-}
-
-export function normalize(s: string): string {
-  return s
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+export function loadOverview(): Promise<FC> {
+  return j<FC>('/data/overview.geojson')
 }

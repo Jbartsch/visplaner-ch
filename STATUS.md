@@ -1,6 +1,6 @@
-# STATUS.md — visplaner-ch
+# STATUS.md — Petripass (repo visplaner-ch)
 
-**Updated:** 2026-10-05 ~21:25 Europe/Zurich
+**Updated:** 2026-10-06 ~07:50 Europe/Zurich
 
 ## Live URLs
 | | URL |
@@ -12,6 +12,21 @@
 
 ## Repo URL
 https://github.com/Jbartsch/visplaner-ch
+
+## v0.3 — Petripass, all 26 cantons + landing pages (2026-10-06)
+- **Brand:** working name **Petripass** (UI title/meta/OG, schema.org, docs). Tagline (locked): *Find your water. Understand the rules. Get the right permit.* with DE/FR/IT translations.
+  Positioning: the decision layer before you buy. Purchase links go to the official seller (cantonal eFJ shop/app, lessee). Independent service, not an authority (shown in the disclaimer).
+- **Coverage:** 3,644 waters in all 26 cantons. Canton tiers: official 4 (ZH, BE, SO, VS) · derived 21 · stub 1 (SH). Details in `docs/COVERAGE.md`.
+- **UI:** canton filter (26), coverage choropleth and grid, quality badge per water, border-water authority, lazy per-canton geometry, IT locale, mobile bottom sheet, "Buy via Petripass" stub (coming soon, localStorage only).
+- **Pages:** `/{de,fr,it,en}`, `/{locale}/kanton/{slug}` (104), `/{locale}/gewaesser/{slug}` (lakes prerendered, the rest ISR). Each has an answer block, FAQ, JSON-LD (FAQPage, BodyOfWater/Place, BreadcrumbList) and hreflang. `sitemap.xml` (~14.7k URLs) and `robots.txt`.
+- Docs: `docs/DATA.md`, `docs/COVERAGE.md`, `docs/MONETIZATION.md`, `research/competitors.md`.
+
+### Follow-ups
+- **IT copy is machine-drafted. It needs review** (`src/i18n/copy.ts`, `src/i18n/pages.ts`, `scripts/lib/cantons_cfg.py`).
+- Deeper rename (repo, Vercel project, domain `petripass.ch`?, `VisplanerApp` component, localStorage keys `vp-*`) is deliberately not done.
+- Next PRs: Freiangeln / no-SaNa filters (sourced flags only), winter/ice mode, species-by-season, rules summary and grounded rules chat.
+- Hejfish seller links per water (where Hejfish is the official seller): to research and source.
+- Sitemap is ~9 MB; split with `generateSitemaps` if Search Console complains.
 
 ## v0.2 — Next.js + real data (2026-10-05)
 - Migrated Vite → **Next.js 16 App Router** (`636be9b` on `main`), Vercel Git-linked; PRs get Preview Deployments.

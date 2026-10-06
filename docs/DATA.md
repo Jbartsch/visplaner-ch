@@ -1,37 +1,64 @@
-# Data — Visplaner CH
+# Data — Petripass (repo `visplaner-ch`)
 
-Output: `public/data/waters.geojson` (built by `scripts/build_data.py`, raw inputs in gitignored `data-raw/`).
+All 26 cantons. Coverage per canton: **[docs/COVERAGE.md](COVERAGE.md)** (generated).
 
-## Zürich — official (Kanton Zürich OGD)
-- Dataset: *Fischereireviere* (geolion 314) via `https://maps.zh.ch/wfs/OGDZHWFS`
-  layers `ogd-0314_giszhpub_fischrevier_stillgewaesser_f`, `…_gewaessernetz_l`, `…_bereiche_f`.
-- **Datenstand 2010** (Bonitierung 2009). Pachtperiode 2026–2034 may have changed individual reviers → panel links the current
-  *Fischereirevierverzeichnis* (PDF, 22.09.2026) and per-revier *Fischereidatenblatt* PDFs.
-- Mapping `pachtverfahren` → permit type:
-  | value | type |
-  |---|---|
-  | Versteigerung, Freihändige Verpachtung | `pacht` |
-  | Patentrevier (Limmat 358, Rhein 32) + reviers 1/2/3 (Zürich-, Greifen-, Pfäffikersee) | `patent` |
-  | Privatrevier | `private` |
-  | Schonrevier | `closed` |
-  | Kanton Zug / empty | `unknown` |
-- `tageskarten_max` → day-ticket flag; `bemerk_beding` → official reach description.
-- Streams: open (not culverted) `Fliessgewässer`/`Kanal` lines merged per revier, simplified 12 m. Ponds ≥ 0.3 ha.
+## Pipeline
+```bash
+python3 -m venv .venv && .venv/bin/pip install geopandas shapely pyarrow pyogrio
+bash scripts/fetch_data.sh         # ZH OGD WFS (+ legacy BE helper)
+bash scripts/fetch_cantons.sh      # official cantonal datasets: SO, SH, VS, LU, SZ, TG (+ others where reachable)
+python3 scripts/fetch_ch.py        # CH base: swissBOUNDARIES3D cantons, VECTOR25 lakes, Gewässernetz 1:2 Mio
+python3 scripts/fetch_vec25.py     # VECTOR25 river network for cantons without an official dataset (slow, ~10 min)
+# BE ANGFISCH (geofiles.be.ch is TLS-reset from the box): run GitHub Action "fetch-geodata",
+#   then `gh run download <id> -n geodata-blocked -D data-raw/be_official`
+.venv/bin/python scripts/build_all.py
+```
+`npm run data` chains the reachable steps. Raw inputs live in gitignored `data-raw/`.
 
-## Bern — derived
-- The official vector dataset **ANGFISCH** (geofiles.be.ch, opendata.swiss "Angelfischerei") was **not reachable from the build box**
-  (all `*.be.ch` hosts TLS-reset). Instead:
-  - Geometry: swisstopo/BAFU **VECTOR25 lakes** and **Gewässernetz 1:2 Mio** via `api3.geo.admin.ch`, clipped to the BE canton polygon (swissBOUNDARIES3D).
-  - Regime: official BE patent list (3 big lakes, 6 mountain lakes, 5 reservoirs, 27 rivers — be.ch / BKFV). Listed waters → `patent`
-    (`confidence: derived`); other lakes/rivers → `unknown` (likely Pacht/private) or `mixed` (border lakes).
-  - Aare split into reaches by position (above Brienzersee, Interlaken, Thun–Bern–Wohlensee, Niederried–Aarberg–Hagneck, Büren–SO/AG).
-- In the app the **official ANGFISCH WMS** (patent/pacht/Schongebiete) can be overlaid; served via `/api/be-wms` proxy on Vercel.
-- TODO: when ANGFISCH GeoPackage/GeoParquet is reachable (e.g. from CI/Vercel build), replace derived BE data with official polygons/lines incl. Pacht reaches & Schongebiete.
+### Outputs
+| File | Use |
+|---|---|
+| `src/data/generated/cantons.json` | canton meta: system, links, rules, sources, coverage, quality (SSR and client) |
+| `src/data/generated/waters.json` | full water index: id, slug, names, canton, kind, permit, quality, bbox, extras (SSR pages) |
+| `src/data/generated/border.json` | border/intercantonal waters: authority, permit hint |
+| `public/data/waters-index.json`, `cantons.json`, `border.json` | client copies |
+| `public/data/overview.geojson` (~400 KB) | big lakes and long rivers, loaded first |
+| `public/data/cantons/XX.geojson` | per-canton detail geometry, lazy-loaded at zoom ≥ 8.6 or when a canton is selected |
+| `public/data/cantons-shape.geojson` | canton polygons for the coverage choropleth |
+| `docs/COVERAGE.md` | coverage matrix |
 
-## Buy / enquire links
-- ZH: eFJ2 app page, «Fischereipatente beziehen 2026», price list 2026 PDF, Fischereirevierverzeichnis PDF, Fischereidatenblatt PDFs.
-- BE: «Fischereipatent beziehen» (online shop entry), «Fischen Bern» app, Patente & Preise, BKFV (Pachtvereinigungen), info.fi@be.ch.
-- Prices shown are guides from the cantonal 2026 pages (adults); always check the shop.
+Geometry is simplified (12 m lines / 8 m polygons for detail; 120–350 m for the overview) and rounded to 5 decimals.
+
+## Quality tiers (per water `q`, per canton `quality`)
+- **official**: the permit regime for this water comes from an official cantonal geodataset (ZH, BE, SO, VS, plus TG Fischenzen/Verbote and the SH Pacht revier).
+- **derived**: the regime is inferred from the canton's published rules (e.g. "all public waters require the cantonal patent", or lake vs. river rules), applied to official or swisstopo geometry.
+- **stub**: the regime could not be determined. The panel says so and links the cantonal office.
+
+## Per-canton sources
+Configured in `scripts/lib/cantons_cfg.py` (system text, buy/app/price/Pacht links, rules, notes, sources, WMS overlays).
+Highlights:
+- **ZH**: OGD Fischereireviere (WFS, Datenstand 2010; the current Pacht period may differ, so the Revierverzeichnis PDF is linked).
+- **BE**: ANGFISCH GeoParquet (patent lakes/reaches, Pacht reaches with lessee sheets, Schongebiete), fetched via GitHub Actions.
+- **SO**: `ch.so.awjf.gewaesser.fischerei` GeoPackage (Patent/Pacht/Privat per revier).
+- **VS**: SCPF carte piscicole (ArcGIS FeatureServer: rivers/lakes with regime and conditions).
+- **LU**: Fischereireviere (OGD) geometry; regime derived (lakes patent, rivers Pacht).
+- **SZ**: Fischgewässer WFS geometry; patent regime derived.
+- **SH**: Fischereireviere OGD (Pacht revier) + swisstopo; regime mostly unknown, so **stub**.
+- **TG**: Freiangelrecht / Fischenzen / Fischereiverbote WFS + swisstopo.
+- **AG**: Fischereireviere only as WMS/order portal, so shown as an official WMS overlay (proxied `/api/wms/ag`); vector regime derived.
+- **BE**: ANGFISCH WMS overlay also available (`/api/wms/be`).
+- **All others**: swisstopo VECTOR25 lakes + rivers, regime derived from the official cantonal fisheries page.
+
+## Border waters
+`BORDER` in `cantons_cfg.py`: Léman (CIPL), Bodensee (IBKF), Untersee/Rhein, Neuchâtel (concordat), Murten, Biel, Lugano, Maggiore,
+Zürichsee, Vierwaldstättersee, Zugersee, Walensee, Hallwilersee, Doubs, Hochrhein. Each water carries `x.border`; the panel shows authority + permit hint.
+
+## Blockers
+- `*.be.ch` TLS resets from the box → solved via GitHub Actions artifact.
+- FR "Pêche à permis" layer on maps.fr.ch → 404 from box; FR derived.
+- Several cantonal buy pages (UR, OW, NW, GL, AI, TI) not reachable from the box → links kept, flagged "not verified from build box".
+- AG revier vectors only via order portal → WMS overlay.
 
 ## Licences / attribution
-- Kanton Zürich OGD (open data). Angelfischerei © Amt für Landwirtschaft und Natur des Kantons Bern. swisstopo / BAFU geodata (open). Basemap © OpenStreetMap contributors.
+Cantonal OGD (ZH, BE, SO, VS, LU, SZ, SH, TG, AG) per their terms, swisstopo/BAFU geodata (open), basemap © OpenStreetMap contributors.
+Attribution is shown in the map footer and in the per-water source line.

@@ -2,52 +2,56 @@
 
 import { useEffect, useRef } from 'react'
 import * as maplibregl from 'maplibre-gl'
-import type { WaterFC } from '@/data/loadWaters'
-import type { Bbox, Canton, PermitType } from '@/types/water'
+import { loadCantonGeo, loadOverview } from '@/data/loadWaters'
+import type { Bbox, Canton, CantonInfo, PermitType } from '@/types/water'
 import { PERMIT_COLORS } from '@/types/water'
 
 type Props = {
-  data: WaterFC
-  cantons: Canton[]
+  cantonInfo: Record<Canton, CantonInfo>
+  cantons: Canton[] // empty = all
   types: PermitType[]
   selectedId: string | null
+  selectedCanton: Canton | null
   focus: { bbox: Bbox; seq: number } | null
-  overlayBE: boolean
+  overlay: boolean
   onSelect: (id: string | null) => void
+  onCanton: (c: Canton) => void
+  onDetail: (loaded: number) => void
 }
 
-const COLOR: maplibregl.ExpressionSpecification = [
+const COLOR = [
   'match',
-  ['get', 'permitType'],
-  ...(Object.entries(PERMIT_COLORS).flatMap(([k, v]) => [k, v]) as string[]),
+  ['get', 'p'],
+  ...Object.entries(PERMIT_COLORS).flatMap(([k, v]) => [k, v]),
   PERMIT_COLORS.unknown,
 ] as unknown as maplibregl.ExpressionSpecification
+const OPACITY = ['match', ['get', 'q'], 'stub', 0.5, 0.92] as unknown as maplibregl.ExpressionSpecification
+const QCOLOR = ['match', ['get', 'q'], 'official', '#16a34a', 'derived', '#f59e0b', '#9ca3af'] as unknown as maplibregl.ExpressionSpecification
 
 maplibregl.setWorkerUrl('/maplibre/maplibre-gl-worker.mjs')
 
-// Official Kanton Bern ANGFISCH WMS, proxied via /api/be-wms (adds CORS + CDN caching)
-const BE_WMS = '/api/be-wms?bbox={bbox-epsg-3857}'
-
+const DETAIL_ZOOM = 8.6
 const POLY: maplibregl.FilterSpecification = ['match', ['geometry-type'], ['Polygon', 'MultiPolygon'], true, false]
 const LINE: maplibregl.FilterSpecification = ['match', ['geometry-type'], ['LineString', 'MultiLineString'], true, false]
 
-function dataFilter(base: maplibregl.FilterSpecification, cantons: Canton[], types: PermitType[]): maplibregl.FilterSpecification {
-  return [
-    'all',
-    base,
-    ['in', ['get', 'canton'], ['literal', cantons]],
-    ['in', ['get', 'permitType'], ['literal', types]],
-  ] as maplibregl.FilterSpecification
+function filt(base: maplibregl.FilterSpecification, cantons: Canton[], types: PermitType[], exclude?: Canton[]): maplibregl.FilterSpecification {
+  const f: unknown[] = ['all', base, ['in', ['get', 'p'], ['literal', types]]]
+  if (cantons.length) f.push(['in', ['get', 'c'], ['literal', cantons]])
+  if (exclude?.length) f.push(['!', ['in', ['get', 'c'], ['literal', exclude]]])
+  return f as maplibregl.FilterSpecification
 }
 
-export function MapView({ data, cantons, types, selectedId, focus, overlayBE, onSelect }: Props) {
+const intersects = (a: Bbox, b: Bbox) => a[0] <= b[2] && a[2] >= b[0] && a[1] <= b[3] && a[3] >= b[1]
+
+export function MapView(props: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
-  const readyRef = useRef(false)
-  const onSelectRef = useRef(onSelect)
-  onSelectRef.current = onSelect
-  const stateRef = useRef({ cantons, types, selectedId, overlayBE })
-  stateRef.current = { cantons, types, selectedId, overlayBE }
+  const cb = useRef(props)
+  cb.current = props
+  const loaded = useRef(new Map<Canton, unknown[]>())
+  const pending = useRef(new Set<Canton>())
+  const apply = useRef<() => void>(() => {})
+  const ensure = useRef<() => void>(() => {})
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
@@ -63,25 +67,25 @@ export function MapView({ data, cantons, types, selectedId, focus, overlayBE, on
             maxzoom: 19,
             attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
           },
-          bewms: {
-            type: 'raster',
-            tiles: [BE_WMS],
-            tileSize: 256,
-            attribution: 'Angelfischerei © Amt für Landwirtschaft und Natur des Kantons Bern',
-          },
+          bewms: { type: 'raster', tiles: ['/api/wms/be?bbox={bbox-epsg-3857}'], tileSize: 256, minzoom: 8, bounds: [6.86, 46.32, 8.46, 47.35], attribution: 'Angelfischerei © Kanton Bern' },
+          agwms: { type: 'raster', tiles: ['/api/wms/ag?bbox={bbox-epsg-3857}'], tileSize: 256, minzoom: 8, bounds: [7.71, 47.13, 8.46, 47.63], attribution: 'Fischereireviere © Kanton Aargau' },
         },
         layers: [
-          { id: 'osm', type: 'raster', source: 'osm', paint: { 'raster-saturation': -0.35 } },
+          { id: 'osm', type: 'raster', source: 'osm', paint: { 'raster-saturation': -0.4 } },
           { id: 'be-official', type: 'raster', source: 'bewms', layout: { visibility: 'none' }, paint: { 'raster-opacity': 0.85 } },
+          { id: 'ag-official', type: 'raster', source: 'agwms', layout: { visibility: 'none' }, paint: { 'raster-opacity': 0.85 } },
         ],
       },
-      center: [8.05, 46.98],
-      zoom: 7.9,
-      minZoom: 6.5,
+      bounds: [
+        [5.96, 45.82],
+        [10.49, 47.81],
+      ],
+      fitBoundsOptions: { padding: 10 },
+      minZoom: 6,
       maxZoom: 16,
       maxBounds: [
-        [5.5, 45.6],
-        [10.8, 48.1],
+        [4.8, 45.2],
+        [11.6, 48.4],
       ],
     })
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
@@ -89,124 +93,139 @@ export function MapView({ data, cantons, types, selectedId, focus, overlayBE, on
     map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-right')
     mapRef.current = map
 
-    map.on('load', () => {
-      const flat = {
-        type: 'FeatureCollection',
-        features: data.features.map((f) => ({
-          type: 'Feature',
-          geometry: f.geometry,
-          properties: {
-            id: f.properties.id,
-            permitType: f.properties.permitType,
-            canton: f.properties.canton,
-            name: f.properties.name.de,
-          },
-        })),
-      }
-      map.addSource('waters', { type: 'geojson', data: flat as never, tolerance: 0.3 })
-      const { cantons: c, types: ty } = stateRef.current
-      map.addLayer({
-        id: 'waters-highlight',
-        type: 'line',
-        source: 'waters',
-        filter: ['==', ['get', 'id'], '__none__'],
-        layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': '#0f172a', 'line-width': ['interpolate', ['linear'], ['zoom'], 7, 5, 13, 13], 'line-opacity': 0.85 },
-      })
+    const empty = { type: 'FeatureCollection', features: [] } as never
 
+    map.on('load', async () => {
+      map.addSource('cshape', { type: 'geojson', data: '/data/cantons-shape.geojson' })
       map.addLayer({
-        id: 'waters-fill',
+        id: 'cshape-fill',
         type: 'fill',
-        source: 'waters',
-        filter: dataFilter(POLY, c, ty),
-        paint: { 'fill-color': COLOR, 'fill-opacity': 0.42 },
+        source: 'cshape',
+        paint: { 'fill-color': QCOLOR, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 6, 0.2, 8.5, 0.08, 10, 0] },
       })
-      map.addLayer({
-        id: 'waters-outline',
-        type: 'line',
-        source: 'waters',
-        filter: dataFilter(POLY, c, ty),
-        paint: { 'line-color': COLOR, 'line-width': 1.6 },
-      })
-      map.addLayer({
-        id: 'waters-line',
-        type: 'line',
-        source: 'waters',
-        filter: dataFilter(LINE, c, ty),
-        layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: {
-          'line-color': COLOR,
-          'line-width': ['interpolate', ['linear'], ['zoom'], 7, 1, 10, 2.5, 13, 5],
-          'line-opacity': 0.92,
-        },
-      })
-      map.addLayer({
-        id: 'waters-hit',
-        type: 'line',
-        source: 'waters',
-        filter: dataFilter(LINE, c, ty),
-        paint: { 'line-color': '#000', 'line-opacity': 0, 'line-width': 14 },
-      })
-      readyRef.current = true
-      applyState()
+      map.addLayer({ id: 'cshape-line', type: 'line', source: 'cshape', paint: { 'line-color': '#334155', 'line-width': ['interpolate', ['linear'], ['zoom'], 6, 0.6, 10, 1.4], 'line-opacity': 0.6 } })
+      map.addLayer({ id: 'cshape-sel', type: 'line', source: 'cshape', filter: ['==', ['get', 'c'], '__'], paint: { 'line-color': '#0f172a', 'line-width': 3 } })
 
-      const hitLayers = ['waters-fill', 'waters-hit']
+      for (const src of ['ov', 'dt'] as const) {
+        map.addSource(src, { type: 'geojson', data: empty, tolerance: src === 'ov' ? 0.6 : 0.35 })
+        map.addLayer({ id: `${src}-fill`, type: 'fill', source: src, filter: POLY, paint: { 'fill-color': COLOR, 'fill-opacity': ['match', ['get', 'q'], 'stub', 0.22, 0.42] } })
+        map.addLayer({ id: `${src}-outline`, type: 'line', source: src, filter: POLY, paint: { 'line-color': COLOR, 'line-width': 1.4, 'line-opacity': OPACITY } })
+        map.addLayer({
+          id: `${src}-line`,
+          type: 'line',
+          source: src,
+          filter: LINE,
+          layout: { 'line-cap': 'round', 'line-join': 'round' },
+          paint: { 'line-color': COLOR, 'line-width': ['interpolate', ['linear'], ['zoom'], 7, 1, 10, 2.4, 13, 5], 'line-opacity': OPACITY },
+        })
+        map.addLayer({ id: `${src}-hit`, type: 'line', source: src, filter: LINE, paint: { 'line-color': '#000', 'line-opacity': 0, 'line-width': 14 } })
+        map.addLayer({
+          id: `${src}-hl`,
+          type: 'line',
+          source: src,
+          filter: ['==', ['get', 'id'], '__none__'],
+          layout: { 'line-cap': 'round', 'line-join': 'round' },
+          paint: { 'line-color': '#0f172a', 'line-width': ['interpolate', ['linear'], ['zoom'], 7, 4, 13, 10], 'line-opacity': 0.75 },
+        })
+      }
+      loadOverview().then((fc) => (map.getSource('ov') as maplibregl.GeoJSONSource).setData(fc as never))
+      apply.current()
+      ensure.current()
+
+      const hit = ['dt-fill', 'dt-hit', 'ov-fill', 'ov-hit']
       map.on('click', (e) => {
         const feats = map.queryRenderedFeatures(
           [
-            [e.point.x - 4, e.point.y - 4],
-            [e.point.x + 4, e.point.y + 4],
+            [e.point.x - 5, e.point.y - 5],
+            [e.point.x + 5, e.point.y + 5],
           ],
-          { layers: hitLayers },
+          { layers: hit },
         )
-        // prefer lines (streams) over big lake polygons when both are hit
-        const line = feats.find((f) => f.layer.id === 'waters-hit')
+        const line = feats.find((f) => f.layer.id.endsWith('-hit'))
         const f = line ?? feats[0]
-        onSelectRef.current((f?.properties?.id as string | undefined) ?? null)
+        if (f) return cb.current.onSelect(f.properties.id as string)
+        const c = map.queryRenderedFeatures(e.point, { layers: ['cshape-fill'] })[0]
+        if (c && map.getZoom() < DETAIL_ZOOM) cb.current.onCanton(c.properties.c as Canton)
+        else cb.current.onSelect(null)
       })
-      for (const id of hitLayers) {
+      for (const id of hit) {
         map.on('mouseenter', id, () => (map.getCanvas().style.cursor = 'pointer'))
         map.on('mouseleave', id, () => (map.getCanvas().style.cursor = ''))
       }
+      map.on('moveend', () => ensure.current())
     })
 
-    function applyState() {
-      if (!readyRef.current) return
-      const { cantons: c, types: ty, selectedId: sel, overlayBE: ov } = stateRef.current
-      map.setFilter('waters-fill', dataFilter(POLY, c, ty))
-      map.setFilter('waters-outline', dataFilter(POLY, c, ty))
-      map.setFilter('waters-line', dataFilter(LINE, c, ty))
-      map.setFilter('waters-hit', dataFilter(LINE, c, ty))
-      map.setFilter('waters-highlight', ['==', ['get', 'id'], sel ?? '__none__'])
-      map.setLayoutProperty('be-official', 'visibility', ov ? 'visible' : 'none')
-      map.setPaintProperty('waters-fill', 'fill-opacity', ov ? 0.15 : 0.42)
+    function rebuildDetail() {
+      const feats = [...loaded.current.values()].flat()
+      ;(map.getSource('dt') as maplibregl.GeoJSONSource | undefined)?.setData({ type: 'FeatureCollection', features: feats } as never)
+      apply.current()
+      cb.current.onDetail(loaded.current.size)
     }
-    ;(map as unknown as { __apply: () => void }).__apply = applyState
+
+    ensure.current = () => {
+      if (!map.getSource('dt')) return
+      const { cantonInfo, cantons, selectedCanton } = cb.current
+      const want = new Set<Canton>()
+      if (map.getZoom() >= DETAIL_ZOOM) {
+        const b = map.getBounds()
+        const view: Bbox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]
+        for (const c of Object.values(cantonInfo)) if (intersects(view, c.bbox)) want.add(c.code)
+      }
+      if (cantons.length && cantons.length <= 3) cantons.forEach((c) => want.add(c))
+      if (selectedCanton) want.add(selectedCanton)
+      for (const c of want) {
+        if (loaded.current.has(c) || pending.current.has(c)) continue
+        pending.current.add(c)
+        loadCantonGeo(c)
+          .then((fc) => {
+            loaded.current.set(c, fc.features)
+            rebuildDetail()
+          })
+          .finally(() => pending.current.delete(c))
+      }
+    }
+
+    apply.current = () => {
+      if (!map.getLayer('dt-fill')) return
+      const { cantons, types, selectedId, overlay, selectedCanton } = cb.current
+      const ex = [...loaded.current.keys()]
+      for (const src of ['ov', 'dt'] as const) {
+        const exc = src === 'ov' ? ex : undefined
+        map.setFilter(`${src}-fill`, filt(POLY, cantons, types, exc))
+        map.setFilter(`${src}-outline`, filt(POLY, cantons, types, exc))
+        map.setFilter(`${src}-line`, filt(LINE, cantons, types, exc))
+        map.setFilter(`${src}-hit`, filt(LINE, cantons, types, exc))
+        map.setFilter(`${src}-hl`, ['==', ['get', 'id'], selectedId ?? '__none__'])
+        map.setPaintProperty(`${src}-fill`, 'fill-opacity', overlay ? 0.12 : ['match', ['get', 'q'], 'stub', 0.22, 0.42])
+      }
+      map.setFilter('cshape-sel', ['in', ['get', 'c'], ['literal', selectedCanton ? [selectedCanton] : cantons.length <= 3 ? cantons : []]])
+      map.setLayoutProperty('be-official', 'visibility', overlay ? 'visible' : 'none')
+      map.setLayoutProperty('ag-official', 'visibility', overlay ? 'visible' : 'none')
+    }
 
     return () => {
       map.remove()
       mapRef.current = null
-      readyRef.current = false
     }
-  }, [data])
+  }, [])
 
   useEffect(() => {
-    const map = mapRef.current as unknown as { __apply?: () => void } | null
-    map?.__apply?.()
-  }, [cantons, types, selectedId, overlayBE])
+    apply.current()
+    ensure.current()
+  }, [props.cantons, props.types, props.selectedId, props.overlay, props.selectedCanton])
 
   useEffect(() => {
     const map = mapRef.current
-    if (!map || !focus) return
-    const [w, s, e, n] = focus.bbox
+    if (!map || !props.focus) return
+    const [w, s, e, n] = props.focus.bbox
     map.fitBounds(
       [
         [w, s],
         [e, n],
       ],
-      { padding: 60, maxZoom: 13.5, duration: 900 },
+      { padding: 50, maxZoom: 13.5, duration: 800 },
     )
-  }, [focus])
+  }, [props.focus])
 
   return <div className="map" ref={containerRef} />
 }

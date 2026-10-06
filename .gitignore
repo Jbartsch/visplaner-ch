@@ -31,3 +31,5 @@ next-env.d.ts
 .vercel
 data-raw/
 public/maplibre/
+.venv/
+__pycache__/
